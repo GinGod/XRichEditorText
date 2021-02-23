@@ -1,2 +1,3 @@
+include ':xricheditortextlib'
 include ':app'
 rootProject.name = "XRichEditorText"
