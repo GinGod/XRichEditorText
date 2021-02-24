@@ -2,6 +2,10 @@ package com.gingod.xricheditortextlib;
 
 import android.widget.ImageView;
 
+/**
+ * 图片加载框架
+ * @author
+ */
 public class XRichText {
     private static XRichText instance;
     private IImageLoader imageLoader;
