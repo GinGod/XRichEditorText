@@ -119,114 +119,131 @@ public class RichTextEditor extends ScrollView {
     public RichTextEditor(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
-        imagePaths = new ArrayList<>();
-        inflater = LayoutInflater.from(context);
-        EDIT_PADDING = dip2px(context, 10);
+        try {
+            imagePaths = new ArrayList<>();
+            inflater = LayoutInflater.from(context);
+            EDIT_PADDING = dip2px(context, 10);
 
-        //获取自定义属性
-        TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.RichTextEditor);
-        rtImageHeight = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_image_height, dip2px(context, 500));
-        rtImageBottom = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_image_bottom, dip2px(context, 10));
-        rtTextSize = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_text_size, dip2px(context, 13));
-        rtTextLineSpace = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_text_line_space, dip2px(context, 8));
-        rtTextColor = ta.getColor(R.styleable.RichTextEditor_rt_editor_text_color, Color.parseColor("#757575"));
-        rtTextInitHint = ta.getString(R.styleable.RichTextEditor_rt_editor_text_init_hint);
-        ta.recycle();
+            //获取自定义属性
+            TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.RichTextEditor);
+            rtImageHeight = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_image_height, dip2px(context, 500));
+            rtImageBottom = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_image_bottom, dip2px(context, 10));
+            rtTextSize = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_text_size, dip2px(context, 13));
+            rtTextLineSpace = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_text_line_space, dip2px(context, 8));
+            rtTextColor = ta.getColor(R.styleable.RichTextEditor_rt_editor_text_color, Color.parseColor("#757575"));
+            rtTextInitHint = ta.getString(R.styleable.RichTextEditor_rt_editor_text_init_hint);
+            ta.recycle();
 
-        // 1. 初始化allLayout
-        allLayout = new LinearLayout(context);
-        allLayout.setOrientation(LinearLayout.VERTICAL);
-        //载入删除动画, 并设置textview合并
-        setupLayoutTransitions();
-        LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        //设置间距，防止生成图片时文字太靠边，不能用margin，否则有黑边
-        allLayout.setPadding(dip2px(context, 15), dip2px(context, 15), dip2px(context, 15), dip2px(context, 15));
-        addView(allLayout, layoutParams);
+            // 1. 初始化allLayout
+            allLayout = new LinearLayout(context);
+            allLayout.setOrientation(LinearLayout.VERTICAL);
+            //载入删除动画, 并设置textview合并
+            setupLayoutTransitions();
+            LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+            //设置间距，防止生成图片时文字太靠边，不能用margin，否则有黑边
+            allLayout.setPadding(dip2px(context, 15), dip2px(context, 15), dip2px(context, 15), dip2px(context, 15));
+            addView(allLayout, layoutParams);
 
-        // 2. 初始化键盘退格监听
-        // 主要用来处理点击回删按钮时，view的一些列合并操作
-        keyListener = new OnKeyListener() {
+            // 2. 初始化键盘退格监听
+            // 主要用来处理点击回删按钮时，view的一些列合并操作
+            keyListener = new OnKeyListener() {
 
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (event.getAction() == KeyEvent.ACTION_DOWN
-                        && event.getKeyCode() == KeyEvent.KEYCODE_DEL) {
-                    EditText edit = (EditText) v;
-                    onBackspacePress(edit);
-                }
-                return false;
-            }
-        };
-
-        // 图片点击监听
-        btnListener = new OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                //点击图片
-                if (v instanceof DataImageView) {
-                    DataImageView imageView = (DataImageView) v;
-                    if (onRtImageClickListener != null) {
-                        onRtImageClickListener.onRtImageClick(imageView, imageView.getAbsolutePath());
+                @Override
+                public boolean onKey(View v, int keyCode, KeyEvent event) {
+                    if (event.getAction() == KeyEvent.ACTION_DOWN
+                            && event.getKeyCode() == KeyEvent.KEYCODE_DEL) {
+                        EditText edit = (EditText) v;
+                        onBackspacePress(edit);
                     }
-                    //点击删除
-                } else if (v instanceof ImageView) {
-                    RelativeLayout parentView = (RelativeLayout) v.getParent();
-                    onImageCloseClick(parentView);
+                    return false;
                 }
-            }
-        };
+            };
 
-        //焦点变化监听
-        focusListener = new OnFocusChangeListener() {
+            // 图片点击监听
+            btnListener = new OnClickListener() {
 
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (hasFocus) {
-                    lastFocusEdit = (EditText) v;
+                @Override
+                public void onClick(View v) {
+                    hideKeyBoard();
+                    //点击图片
+                    if (v instanceof DataImageView) {
+                        DataImageView imageView = (DataImageView) v;
+                        if (onRtImageClickListener != null) {
+                            onRtImageClickListener.onRtImageClick(imageView, imageView.getAbsolutePath());
+                        }
+                        //点击删除
+                    } else if (v instanceof ImageView) {
+                        RelativeLayout parentView = (RelativeLayout) v.getParent();
+                        onImageCloseClick(parentView);
+                    }
                 }
-            }
-        };
+            };
 
-        //添加第一个Edittext
-        addFirstEditText();
+            //焦点变化监听
+            focusListener = new OnFocusChangeListener() {
+
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                    if (hasFocus) {
+                        lastFocusEdit = (EditText) v;
+                    }
+                }
+            };
+
+            //添加第一个Edittext
+            addFirstEditText();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
      * 添加第一个Edittext
      */
     private void addFirstEditText() {
-        LinearLayout.LayoutParams firstEditParam = new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        EditText firstEdit = createEditText(rtTextInitHint, EDIT_PADDING);
-        allLayout.addView(firstEdit, firstEditParam);
-        lastFocusEdit = firstEdit;
+        try {
+            LinearLayout.LayoutParams firstEditParam = new LinearLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+            EditText firstEdit = createEditText(rtTextInitHint, EDIT_PADDING);
+            allLayout.addView(firstEdit, firstEditParam);
+            lastFocusEdit = firstEdit;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
      * 初始化transition动画
      */
     private void setupLayoutTransitions() {
-        mTransitioner = new LayoutTransition();
-        allLayout.setLayoutTransition(mTransitioner);
-        mTransitioner.addTransitionListener(new LayoutTransition.TransitionListener() {
+        try {
+            mTransitioner = new LayoutTransition();
+            allLayout.setLayoutTransition(mTransitioner);
+            mTransitioner.addTransitionListener(new LayoutTransition.TransitionListener() {
 
-            @Override
-            public void startTransition(LayoutTransition transition,
-                                        ViewGroup container, View view, int transitionType) {
+                @Override
+                public void startTransition(LayoutTransition transition,
+                                            ViewGroup container, View view, int transitionType) {
 
-            }
-
-            @Override
-            public void endTransition(LayoutTransition transition,
-                                      ViewGroup container, View view, int transitionType) {
-                if (!transition.isRunning() && transitionType == LayoutTransition.CHANGE_DISAPPEARING) {
-                    // transition动画结束，合并EditText
-                    mergeEditText();
                 }
-            }
-        });
-        mTransitioner.setDuration(300);
+
+                @Override
+                public void endTransition(LayoutTransition transition,
+                                          ViewGroup container, View view, int transitionType) {
+                    try {
+                        if (!transition.isRunning() && transitionType == LayoutTransition.CHANGE_DISAPPEARING) {
+                            // transition动画结束，合并EditText
+                            mergeEditText();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            mTransitioner.setDuration(300);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -334,14 +351,18 @@ public class RichTextEditor extends ScrollView {
      */
     public EditText createEditText(String hint, int paddingTop) {
         EditText editText = (EditText) inflater.inflate(R.layout.rich_edittext, null);
-        editText.setOnKeyListener(keyListener);
-        editText.setTag(viewTagIndex++);
-        editText.setPadding(editNormalPadding, paddingTop, editNormalPadding, paddingTop);
-        editText.setHint(hint);
-        editText.setTextSize(TypedValue.COMPLEX_UNIT_PX, rtTextSize);
-        editText.setTextColor(rtTextColor);
-        editText.setLineSpacing(rtTextLineSpace, 1.0f);
-        editText.setOnFocusChangeListener(focusListener);
+        try {
+            editText.setOnKeyListener(keyListener);
+            editText.setTag(viewTagIndex++);
+            editText.setPadding(editNormalPadding, paddingTop, editNormalPadding, paddingTop);
+            editText.setHint(hint);
+            editText.setTextSize(TypedValue.COMPLEX_UNIT_PX, rtTextSize);
+            editText.setTextColor(rtTextColor);
+            editText.setLineSpacing(rtTextLineSpace, 1.0f);
+            editText.setOnFocusChangeListener(focusListener);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return editText;
     }
 
@@ -350,12 +371,16 @@ public class RichTextEditor extends ScrollView {
      */
     private RelativeLayout createImageLayout() {
         RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.edit_imageview, null);
-        layout.setTag(viewTagIndex++);
-        View closeView = layout.findViewById(R.id.image_close);
-        closeView.setTag(layout.getTag());
-        closeView.setOnClickListener(btnListener);
-        DataImageView imageView = layout.findViewById(R.id.edit_imageView);
-        imageView.setOnClickListener(btnListener);
+        try {
+            layout.setTag(viewTagIndex++);
+            View closeView = layout.findViewById(R.id.image_close);
+            closeView.setTag(layout.getTag());
+            closeView.setOnClickListener(btnListener);
+            DataImageView imageView = layout.findViewById(R.id.edit_imageView);
+            imageView.setOnClickListener(btnListener);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return layout;
     }
 
@@ -551,12 +576,16 @@ public class RichTextEditor extends ScrollView {
     }
 
     /**
-     * 隐藏小键盘
+     * 隐藏软键盘
      */
     public void hideKeyBoard() {
-        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null && lastFocusEdit != null) {
-            imm.hideSoftInputFromWindow(lastFocusEdit.getWindowToken(), 0);
+        try {
+            InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null && lastFocusEdit != null) {
+                imm.hideSoftInputFromWindow(lastFocusEdit.getWindowToken(), 0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
