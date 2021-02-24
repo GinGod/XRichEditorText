@@ -14,6 +14,7 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -688,5 +689,31 @@ public class RichTextEditor extends ScrollView {
 
     public void setOnRtImageClickListener(OnRtImageClickListener onRtImageClickListener) {
         this.onRtImageClickListener = onRtImageClickListener;
+    }
+
+    private float startY;
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        try {
+            switch (ev.getAction()) {
+                //记录初始值
+                case MotionEvent.ACTION_DOWN:
+                    startY = ev.getRawY();
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    //有滑动, 则关闭软键盘
+                    float endY = Math.abs(ev.getRawY() - startY);
+                    if (endY > 52) {
+                        hideKeyBoard();
+                    }
+                    break;
+                case MotionEvent.ACTION_UP:
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return super.dispatchTouchEvent(ev);
     }
 }
