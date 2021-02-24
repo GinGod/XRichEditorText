@@ -4,5 +4,6 @@
     android:layout_height="wrap_content"
     android:background="@null"
     android:cursorVisible="true"
-    android:textSize="16sp"
-    android:textColor="#616161" />
+    android:hint="输入文字"
+    android:textColor="#212121"
+    android:textSize="16sp" />

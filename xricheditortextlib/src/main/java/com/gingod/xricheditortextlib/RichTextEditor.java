@@ -92,7 +92,7 @@ public class RichTextEditor extends ScrollView {
     /**
      * 文字相关属性，初始提示信息，文字大小和颜色
      */
-    private String rtTextInitHint = "请输入内容";
+    private String rtTextInitHint = "输入文字";
     private int rtTextSize = 16;
     private int rtTextColor = Color.parseColor("#757575");
     private int rtTextLineSpace = 8;
@@ -129,11 +129,15 @@ public class RichTextEditor extends ScrollView {
             TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.RichTextEditor);
             rtImageHeight = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_image_height, dip2px(context, 500));
             rtImageBottom = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_image_bottom, dip2px(context, 10));
-            rtTextSize = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_text_size, dip2px(context, 13));
-            rtTextLineSpace = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_text_line_space, dip2px(context, 8));
-            rtTextColor = ta.getColor(R.styleable.RichTextEditor_rt_editor_text_color, Color.parseColor("#757575"));
+            rtTextSize = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_text_size, dip2px(context, 16));
+            rtTextLineSpace = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_text_line_space, dip2px(context, 16));
+            rtTextColor = ta.getColor(R.styleable.RichTextEditor_rt_editor_text_color, Color.parseColor("#212121"));
             rtTextInitHint = ta.getString(R.styleable.RichTextEditor_rt_editor_text_init_hint);
             ta.recycle();
+
+            if (TextUtils.isEmpty(rtTextInitHint)) {
+                rtTextInitHint = "输入文字";
+            }
 
             // 1. 初始化allLayout
             allLayout = new LinearLayout(context);
@@ -471,7 +475,7 @@ public class RichTextEditor extends ScrollView {
      */
     public void addEditTextAtIndex(final int index, CharSequence editStr) {
         try {
-            EditText editText2 = createEditText("插入文字", EDIT_PADDING);
+            EditText editText2 = createEditText("输入文字", EDIT_PADDING);
             //搜索关键词高亮
             if (!TextUtils.isEmpty(keywords)) {
                 SpannableStringBuilder textStr = highlight(editStr.toString(), keywords);
