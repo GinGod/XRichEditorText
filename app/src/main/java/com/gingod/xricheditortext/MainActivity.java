@@ -72,6 +72,10 @@ public class MainActivity extends BaseSimpleActivity {
         EditData editData = new EditData();
         editData.content = rte_main.getEditData();
         BasisSPUtils.setStringPreferences(mActivity, "editData", mGson.toJson(editData));
+        String data = mGson.toJson(editData);
+        Log.e("123", data);
+        String data1 = data.replaceAll("\\\\n|\\\\r\\\\n|\\\\r","123");
+        Log.e("123", data1);
         super.onDestroy();
     }
 }
