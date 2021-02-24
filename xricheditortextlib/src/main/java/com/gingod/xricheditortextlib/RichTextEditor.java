@@ -125,8 +125,8 @@ public class RichTextEditor extends ScrollView {
 
         //获取自定义属性
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.RichTextEditor);
-        rtImageHeight = ta.getInteger(R.styleable.RichTextEditor_rt_editor_image_height, dip2px(context, 500));
-        rtImageBottom = ta.getInteger(R.styleable.RichTextEditor_rt_editor_image_bottom, dip2px(context, 10));
+        rtImageHeight = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_image_height, dip2px(context, 500));
+        rtImageBottom = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_image_bottom, dip2px(context, 10));
         rtTextSize = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_text_size, dip2px(context, 13));
         rtTextLineSpace = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_text_line_space, dip2px(context, 8));
         rtTextColor = ta.getColor(R.styleable.RichTextEditor_rt_editor_text_color, Color.parseColor("#757575"));
@@ -482,7 +482,7 @@ public class RichTextEditor extends ScrollView {
             final RelativeLayout imageLayout = createImageLayout();
             DataImageView imageView = imageLayout.findViewById(R.id.edit_imageView);
             imageView.setAbsolutePath(imagePath);
-            XRichText.getInstance().loadImage(imagePath, imageView, rtImageHeight);
+            RichTextUtils.getInstance().loadImage(imagePath, imageView, rtImageHeight);
 
 //			// 调整imageView的高度，根据宽度等比获得高度
 //			int imageHeight ; //解决连续加载多张图片导致后续图片都跟第一张高度相同的问题

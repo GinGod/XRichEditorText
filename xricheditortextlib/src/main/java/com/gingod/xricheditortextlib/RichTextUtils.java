@@ -6,15 +6,15 @@ import android.widget.ImageView;
  * 图片加载框架
  * @author
  */
-public class XRichText {
-    private static XRichText instance;
+public class RichTextUtils {
+    private static RichTextUtils instance;
     private IImageLoader imageLoader;
 
-    public static XRichText getInstance(){
+    public static RichTextUtils getInstance(){
         if (instance == null){
-            synchronized (XRichText.class){
+            synchronized (RichTextUtils.class){
                 if (instance == null){
-                    instance = new XRichText();
+                    instance = new RichTextUtils();
                 }
             }
         }

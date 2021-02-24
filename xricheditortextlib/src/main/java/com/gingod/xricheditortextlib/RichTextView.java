@@ -15,7 +15,6 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
@@ -252,7 +251,7 @@ public class RichTextView extends ScrollView {
         }
         final DataImageView imageView = imageLayout.findViewById(R.id.edit_imageView);
         imageView.setAbsolutePath(imagePath);
-        XRichText.getInstance().loadImage(imagePath, imageView, rtImageHeight);
+        RichTextUtils.getInstance().loadImage(imagePath, imageView, rtImageHeight);
         allLayout.addView(imageLayout, index);
     }
 

@@ -1,13 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/white"
+    android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <com.gingod.xricheditortextlib.RichTextEditor
+        android:id="@+id/rte_main"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:layout_weight="1"
+        app:rt_editor_image_bottom="10dp"
+        app:rt_editor_image_height="500dp"
+        app:rt_editor_text_color="#212121"
+        app:rt_editor_text_init_hint="在这里输入内容"
+        app:rt_editor_text_line_space="6dp"
+        app:rt_editor_text_size="16sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tv_main_pic"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="5dp"
+            android:text="图片"
+            android:textColor="@color/black" />
+    </LinearLayout>
 
 </LinearLayout>
