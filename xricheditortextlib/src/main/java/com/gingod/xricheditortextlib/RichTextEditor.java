@@ -4,8 +4,6 @@ import android.animation.LayoutTransition;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -13,7 +11,6 @@ import android.text.TextUtils;
 import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -41,9 +38,9 @@ public class RichTextEditor extends ScrollView {
     /**
      * edittext常规padding是10dp
      */
-    private static final int EDIT_PADDING = 10;
+    private static int EDIT_PADDING = 10;
     /**
-     * 新生的view都会打一个tag，对每个view来说，这个tag是唯一的。
+     * 新生的view都会打一个tag，对每个view来说，这个tag是唯一的
      */
     private int viewTagIndex = 1;
     /**
@@ -83,7 +80,6 @@ public class RichTextEditor extends ScrollView {
      * 关键词高亮
      */
     private String keywords;
-
     /**
      * 自定义属性, 插入的图片显示高度
      **/
@@ -108,7 +104,7 @@ public class RichTextEditor extends ScrollView {
      */
     private OnRtImageDeleteListener onRtImageDeleteListener;
     /**
-     * 图片点击接口
+     * 查看图片接口
      */
     private OnRtImageClickListener onRtImageClickListener;
 
@@ -123,23 +119,23 @@ public class RichTextEditor extends ScrollView {
     public RichTextEditor(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
+        imagePaths = new ArrayList<>();
+        inflater = LayoutInflater.from(context);
+        EDIT_PADDING = dip2px(context, 10);
+
         //获取自定义属性
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.RichTextEditor);
-        rtImageHeight = ta.getInteger(R.styleable.RichTextEditor_rt_editor_image_height, 500);
-        rtImageBottom = ta.getInteger(R.styleable.RichTextEditor_rt_editor_image_bottom, 10);
-        rtTextSize = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_text_size, 16);
-        rtTextLineSpace = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_text_line_space, 8);
+        rtImageHeight = ta.getInteger(R.styleable.RichTextEditor_rt_editor_image_height, dip2px(context, 500));
+        rtImageBottom = ta.getInteger(R.styleable.RichTextEditor_rt_editor_image_bottom, dip2px(context, 10));
+        rtTextSize = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_text_size, dip2px(context, 13));
+        rtTextLineSpace = ta.getDimensionPixelSize(R.styleable.RichTextEditor_rt_editor_text_line_space, dip2px(context, 8));
         rtTextColor = ta.getColor(R.styleable.RichTextEditor_rt_editor_text_color, Color.parseColor("#757575"));
         rtTextInitHint = ta.getString(R.styleable.RichTextEditor_rt_editor_text_init_hint);
         ta.recycle();
 
-        imagePaths = new ArrayList<>();
-        inflater = LayoutInflater.from(context);
-
         // 1. 初始化allLayout
         allLayout = new LinearLayout(context);
         allLayout.setOrientation(LinearLayout.VERTICAL);
-        //allLayout.setBackgroundColor(Color.WHITE);
         //载入删除动画, 并设置textview合并
         setupLayoutTransitions();
         LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
@@ -162,7 +158,7 @@ public class RichTextEditor extends ScrollView {
             }
         };
 
-        // 3. 图片叉掉处理
+        // 图片点击监听
         btnListener = new OnClickListener() {
 
             @Override
@@ -181,6 +177,7 @@ public class RichTextEditor extends ScrollView {
             }
         };
 
+        //焦点变化监听
         focusListener = new OnFocusChangeListener() {
 
             @Override
@@ -192,21 +189,44 @@ public class RichTextEditor extends ScrollView {
         };
 
         //添加第一个Edittext
+        addFirstEditText();
+    }
+
+    /**
+     * 添加第一个Edittext
+     */
+    private void addFirstEditText() {
         LinearLayout.LayoutParams firstEditParam = new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        EditText firstEdit = createEditText(rtTextInitHint, dip2px(context, EDIT_PADDING));
+        EditText firstEdit = createEditText(rtTextInitHint, EDIT_PADDING);
         allLayout.addView(firstEdit, firstEditParam);
         lastFocusEdit = firstEdit;
     }
 
     /**
-     * dip2px
-     *
-     * @return
+     * 初始化transition动画
      */
-    private int dip2px(Context context, float dipValue) {
-        float m = context.getResources().getDisplayMetrics().density;
-        return (int) (dipValue * m + 0.5f);
+    private void setupLayoutTransitions() {
+        mTransitioner = new LayoutTransition();
+        allLayout.setLayoutTransition(mTransitioner);
+        mTransitioner.addTransitionListener(new LayoutTransition.TransitionListener() {
+
+            @Override
+            public void startTransition(LayoutTransition transition,
+                                        ViewGroup container, View view, int transitionType) {
+
+            }
+
+            @Override
+            public void endTransition(LayoutTransition transition,
+                                      ViewGroup container, View view, int transitionType) {
+                if (!transition.isRunning() && transitionType == LayoutTransition.CHANGE_DISAPPEARING) {
+                    // transition动画结束，合并EditText
+                    mergeEditText();
+                }
+            }
+        });
+        mTransitioner.setDuration(300);
     }
 
     /**
@@ -224,7 +244,7 @@ public class RichTextEditor extends ScrollView {
                 // 如果editIndex-1<0,则返回的是null
                 if (null != preView) {
                     if (preView instanceof RelativeLayout) {
-                        // 光标EditText的上一个view对应的是图片
+                        // 光标EditText的上一个view对应的是图片, 则删除图片
                         onImageCloseClick(preView);
                     } else if (preView instanceof EditText) {
                         // 光标EditText的上一个view对应的还是文本框EditText
@@ -248,33 +268,6 @@ public class RichTextEditor extends ScrollView {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public interface OnRtImageDeleteListener {
-        /**
-         * 图片删除
-         *
-         * @param imagePath
-         */
-        void onRtImageDelete(String imagePath);
-    }
-
-    public void setOnRtImageDeleteListener(OnRtImageDeleteListener onRtImageDeleteListener) {
-        this.onRtImageDeleteListener = onRtImageDeleteListener;
-    }
-
-    public interface OnRtImageClickListener {
-        /**
-         * 图片点击查看
-         *
-         * @param view
-         * @param imagePath
-         */
-        void onRtImageClick(View view, String imagePath);
-    }
-
-    public void setOnRtImageClickListener(OnRtImageClickListener onRtImageClickListener) {
-        this.onRtImageClickListener = onRtImageClickListener;
     }
 
     /**
@@ -306,18 +299,34 @@ public class RichTextEditor extends ScrollView {
     }
 
     /**
-     * 清空所有布局
+     * 图片删除的时候，如果上下方都是EditText，则合并处理
      */
-    public void clearAllLayout() {
-        allLayout.removeAllViews();
-    }
+    private void mergeEditText() {
+        try {
+            View preView = allLayout.getChildAt(disappearingImageIndex - 1);
+            View nextView = allLayout.getChildAt(disappearingImageIndex);
+            if (preView instanceof EditText && nextView instanceof EditText) {
+                EditText preEdit = (EditText) preView;
+                EditText nextEdit = (EditText) nextView;
+                String str1 = preEdit.getText().toString();
+                String str2 = nextEdit.getText().toString();
+                String mergeText = "";
+                if (str2.length() > 0) {
+                    mergeText = str1 + "\r\n" + str2;
+                } else {
+                    mergeText = str1;
+                }
 
-    /**
-     * 获取索引位置
-     */
-    public int getLastIndex() {
-        int childCount = allLayout.getChildCount();
-        return childCount;
+                allLayout.setLayoutTransition(null);
+                allLayout.removeView(nextEdit);
+                preEdit.setText(mergeText);
+                preEdit.requestFocus();
+                preEdit.setSelection(str1.length(), str1.length());
+                allLayout.setLayoutTransition(mTransitioner);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -397,16 +406,6 @@ public class RichTextEditor extends ScrollView {
             hideKeyBoard();
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    /**
-     * 隐藏小键盘
-     */
-    public void hideKeyBoard() {
-        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null && lastFocusEdit != null) {
-            imm.hideSoftInputFromWindow(lastFocusEdit.getWindowToken(), 0);
         }
     }
 
@@ -521,87 +520,6 @@ public class RichTextEditor extends ScrollView {
     }
 
     /**
-     * 根据view的宽度，动态缩放bitmap尺寸
-     *
-     * @param width view的宽度
-     */
-    public Bitmap getScaledBitmap(String filePath, int width) {
-        if (TextUtils.isEmpty(filePath)) {
-            return null;
-        }
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        try {
-            options.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(filePath, options);
-            int sampleSize = options.outWidth > width ? options.outWidth / width
-                    + 1 : 1;
-            options.inJustDecodeBounds = false;
-            options.inSampleSize = sampleSize;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return BitmapFactory.decodeFile(filePath, options);
-    }
-
-    /**
-     * 初始化transition动画
-     */
-    private void setupLayoutTransitions() {
-        mTransitioner = new LayoutTransition();
-        allLayout.setLayoutTransition(mTransitioner);
-        mTransitioner.addTransitionListener(new LayoutTransition.TransitionListener() {
-
-            @Override
-            public void startTransition(LayoutTransition transition,
-                                        ViewGroup container, View view, int transitionType) {
-
-            }
-
-            @Override
-            public void endTransition(LayoutTransition transition,
-                                      ViewGroup container, View view, int transitionType) {
-                if (!transition.isRunning()
-                        && transitionType == LayoutTransition.CHANGE_DISAPPEARING) {
-                    // transition动画结束，合并EditText
-                    mergeEditText();
-                }
-            }
-        });
-        mTransitioner.setDuration(300);
-    }
-
-    /**
-     * 图片删除的时候，如果上下方都是EditText，则合并处理
-     */
-    private void mergeEditText() {
-        try {
-            View preView = allLayout.getChildAt(disappearingImageIndex - 1);
-            View nextView = allLayout.getChildAt(disappearingImageIndex);
-            if (preView instanceof EditText && nextView instanceof EditText) {
-                EditText preEdit = (EditText) preView;
-                EditText nextEdit = (EditText) nextView;
-                String str1 = preEdit.getText().toString();
-                String str2 = nextEdit.getText().toString();
-                String mergeText = "";
-                if (str2.length() > 0) {
-                    mergeText = str1 + "\r\n" + str2;
-                } else {
-                    mergeText = str1;
-                }
-
-                allLayout.setLayoutTransition(null);
-                allLayout.removeView(nextEdit);
-                preEdit.setText(mergeText);
-                preEdit.requestFocus();
-                preEdit.setSelection(str1.length(), str1.length());
-                allLayout.setLayoutTransition(mTransitioner);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
      * 对外提供的接口, 生成编辑数据上传
      */
     public List<EditData> buildEditData() {
@@ -630,6 +548,42 @@ public class RichTextEditor extends ScrollView {
     public class EditData {
         public String inputStr;
         public String imagePath;
+    }
+
+    /**
+     * 隐藏小键盘
+     */
+    public void hideKeyBoard() {
+        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null && lastFocusEdit != null) {
+            imm.hideSoftInputFromWindow(lastFocusEdit.getWindowToken(), 0);
+        }
+    }
+
+    /**
+     * dip2px
+     *
+     * @return
+     */
+    private int dip2px(Context context, float dipValue) {
+        float m = context.getResources().getDisplayMetrics().density;
+        return (int) (dipValue * m + 0.5f);
+    }
+
+    /**
+     * 清空所有布局
+     */
+    public void clearAllLayout() {
+        allLayout.removeAllViews();
+        addFirstEditText();
+    }
+
+    /**
+     * 获取最后一个view位置
+     */
+    public int getLastIndex() {
+        int childCount = allLayout.getChildCount();
+        return childCount;
     }
 
     public int getRtImageHeight() {
@@ -678,5 +632,32 @@ public class RichTextEditor extends ScrollView {
 
     public void setRtTextLineSpace(int rtTextLineSpace) {
         this.rtTextLineSpace = rtTextLineSpace;
+    }
+
+    public interface OnRtImageDeleteListener {
+        /**
+         * 图片删除
+         *
+         * @param imagePath
+         */
+        void onRtImageDelete(String imagePath);
+    }
+
+    public void setOnRtImageDeleteListener(OnRtImageDeleteListener onRtImageDeleteListener) {
+        this.onRtImageDeleteListener = onRtImageDeleteListener;
+    }
+
+    public interface OnRtImageClickListener {
+        /**
+         * 图片点击查看
+         *
+         * @param view
+         * @param imagePath
+         */
+        void onRtImageClick(View view, String imagePath);
+    }
+
+    public void setOnRtImageClickListener(OnRtImageClickListener onRtImageClickListener) {
+        this.onRtImageClickListener = onRtImageClickListener;
     }
 }

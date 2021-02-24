@@ -11,26 +11,19 @@ import android.util.AttributeSet;
 import androidx.appcompat.widget.AppCompatImageView;
 
 /**
- * 自定义ImageView，可以存放Bitmap和Path等信息(可画边框)
+ * 自定义ImageView，可以存放Path等信息(可画边框)
  *
  * @author
  */
 public class DataImageView extends AppCompatImageView {
     /**
-     * 是否显示边框
+     * 是否显示边框, 边框颜色和宽度
      */
     private boolean showBorder = false;
-    /**
-     * 边框颜色
-     */
     private int borderColor = Color.GRAY;
-    /**
-     * 边框大小
-     */
     private int borderWidth = 5;
 
     private String absolutePath;
-    private Bitmap bitmap;
     private Paint paint;
 
     public DataImageView(Context context) {
@@ -71,14 +64,6 @@ public class DataImageView extends AppCompatImageView {
 
     public void setShowBorder(boolean showBorder) {
         this.showBorder = showBorder;
-    }
-
-    public Bitmap getBitmap() {
-        return bitmap;
-    }
-
-    public void setBitmap(Bitmap bitmap) {
-        this.bitmap = bitmap;
     }
 
     public int getBorderColor() {
