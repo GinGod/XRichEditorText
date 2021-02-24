@@ -11,6 +11,7 @@ import android.text.TextUtils;
 import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -23,6 +24,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
+
+import com.gingod.xricheditortextlib.bean.EditData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,8 +97,8 @@ public class RichTextEditor extends ScrollView {
      */
     private String rtTextInitHint = "输入文字";
     private int rtTextSize = 16;
-    private int rtTextColor = Color.parseColor("#757575");
-    private int rtTextLineSpace = 8;
+    private int rtTextColor = Color.parseColor("#212121");
+    private int rtTextLineSpace = 16;
     /**
      * 图片点击监听器
      */
@@ -303,8 +306,8 @@ public class RichTextEditor extends ScrollView {
             if (!mTransitioner.isRunning()) {
                 disappearingImageIndex = allLayout.indexOfChild(view);
                 //删除文件夹里的图片
-                List<EditData> dataList = buildEditData();
-                EditData editData = dataList.get(disappearingImageIndex);
+                List<EditData.Data> dataList = getEditData();
+                EditData.Data editData = dataList.get(disappearingImageIndex);
                 if (editData.imagePath != null) {
                     if (onRtImageDeleteListener != null) {
                         onRtImageDeleteListener.onRtImageDelete(editData.imagePath);
@@ -552,13 +555,13 @@ public class RichTextEditor extends ScrollView {
     /**
      * 对外提供的接口, 生成编辑数据上传
      */
-    public List<EditData> buildEditData() {
-        List<EditData> dataList = new ArrayList<EditData>();
+    public List<EditData.Data> getEditData() {
+        List<EditData.Data> dataList = new ArrayList<EditData.Data>();
         try {
             int num = allLayout.getChildCount();
             for (int index = 0; index < num; index++) {
                 View itemView = allLayout.getChildAt(index);
-                EditData itemData = new EditData();
+                EditData.Data itemData = new EditData.Data();
                 if (itemView instanceof EditText) {
                     EditText item = (EditText) itemView;
                     itemData.inputStr = item.getText().toString();
@@ -575,9 +578,40 @@ public class RichTextEditor extends ScrollView {
         return dataList;
     }
 
-    public class EditData {
-        public String inputStr;
-        public String imagePath;
+    /**
+     * 将数据展示
+     */
+    public void setEditData(List<EditData.Data> editData) {
+        try {
+            for (int i = 0; i < editData.size(); i++) {
+                EditData.Data data = editData.get(i);
+                //数据为空
+                if (TextUtils.isEmpty(data.inputStr) && TextUtils.isEmpty(data.imagePath)) {
+
+                    //只有文字为空, 图片数据存在
+                } else if (TextUtils.isEmpty(data.inputStr)) {
+                    insertImage(data.imagePath);
+                    //只有图片数据为空, 文字存在
+                } else if (TextUtils.isEmpty(data.imagePath)) {
+                    //最后一个为EditText且内容为空, 则直接设置内容
+                    View childAt = allLayout.getChildAt(allLayout.getChildCount() - 1);
+                    if (childAt instanceof EditText) {
+                        EditText view = (EditText) childAt;
+                        String text = view.getText().toString();
+                        if (TextUtils.isEmpty(text)) {
+                            view.setText(data.inputStr);
+                            lastFocusEdit = view;
+                            lastFocusEdit.requestFocus();
+                            lastFocusEdit.setSelection(data.inputStr.length(), data.inputStr.length());
+                            continue;
+                        }
+                    }
+                    addEditTextAtIndex(getLastIndex(), data.inputStr);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
