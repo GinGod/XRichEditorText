@@ -16,3 +16,8 @@ Step 2. Add the dependency
 	dependencies {
 	        implementation 'com.github.GinGod:XRichEditorText:v1.0.0'
 	}
+
+Step 3. 混淆规则
+
+    -keep class com.gingod.xricheditortextlib.bean.** {*;}
+    -dontwarn com.gingod.xricheditortextlib.bean.**
