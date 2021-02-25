@@ -49,7 +49,7 @@ public class MainActivity extends BaseSimpleActivity {
 
         rte_main.setOnRtImageDeleteListener(new RichTextEditor.OnRtImageDeleteListener() {
             @Override
-            public void onRtImageDelete(String imagePath) {
+            public void onRtImageDelete(EditData.Data imageData) {
                 Toast.makeText(MainActivity.this, "图片删除", Toast.LENGTH_SHORT).show();
             }
         });

@@ -299,13 +299,10 @@ public class RichTextEditor extends ScrollView {
         try {
             if (!mTransitioner.isRunning()) {
                 disappearingImageIndex = allLayout.indexOfChild(view);
-                //删除文件夹里的图片
-                List<EditData.Data> dataList = getEditData();
-                EditData.Data editData = dataList.get(disappearingImageIndex);
-                if (editData.imagePath != null) {
-                    if (onRtImageDeleteListener != null) {
-                        onRtImageDeleteListener.onRtImageDelete(editData.imagePath);
-                    }
+                DataImageView dataImageView = view.findViewById(R.id.edit_imageView);
+                EditData.Data editData = dataImageView.getImageData();
+                if (onRtImageDeleteListener != null) {
+                    onRtImageDeleteListener.onRtImageDelete(editData);
                 }
                 allLayout.removeView(view);
                 //合并上下EditText内容
@@ -590,15 +587,22 @@ public class RichTextEditor extends ScrollView {
             int num = allLayout.getChildCount();
             for (int index = 0; index < num; index++) {
                 View itemView = allLayout.getChildAt(index);
-                EditData.Data itemData = new EditData.Data();
+                EditData.Data itemData = null;
                 if (itemView instanceof EditText) {
                     EditText item = (EditText) itemView;
-                    itemData.inputStr = item.getText().toString();
+                    String inputStr = item.getText().toString();
+                    if (!TextUtils.isEmpty(inputStr)) {
+                        itemData = new EditData.Data();
+                        itemData.type = EditData.TEXT;
+                        itemData.inputStr = inputStr;
+                    }
                 } else if (itemView instanceof RelativeLayout) {
                     DataImageView item = (DataImageView) itemView.findViewById(R.id.edit_imageView);
-                    itemData.imagePath = item.getAbsolutePath();
+                    itemData = item.getImageData();
                 }
-                dataList.add(itemData);
+                if (itemData != null) {
+                    dataList.add(itemData);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -614,14 +618,11 @@ public class RichTextEditor extends ScrollView {
         try {
             for (int i = 0; i < editData.size(); i++) {
                 EditData.Data data = editData.get(i);
-                //数据为空
-                if (TextUtils.isEmpty(data.inputStr) && TextUtils.isEmpty(data.imagePath)) {
-
-                    //只有文字为空, 图片数据存在
-                } else if (TextUtils.isEmpty(data.inputStr)) {
+                //图片
+                if (data.type == EditData.IMAGE) {
                     insertImage(data);
-                    //只有图片数据为空, 文字存在
-                } else if (TextUtils.isEmpty(data.imagePath)) {
+                    //文字
+                } else if (data.type == EditData.TEXT) {
                     //最后一个为EditText且内容为空, 则直接设置内容
                     View childAt = allLayout.getChildAt(allLayout.getChildCount() - 1);
                     if (childAt instanceof EditText) {
@@ -735,9 +736,9 @@ public class RichTextEditor extends ScrollView {
         /**
          * 图片删除
          *
-         * @param imagePath
+         * @param imageData
          */
-        void onRtImageDelete(String imagePath);
+        void onRtImageDelete(EditData.Data imageData);
     }
 
     public void setOnRtImageDeleteListener(OnRtImageDeleteListener onRtImageDeleteListener) {
