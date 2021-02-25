@@ -30,13 +30,23 @@
             android:textColor="@color/black" />
 
         <TextView
-            android:id="@+id/tv_main_video"
+            android:id="@+id/tv_main_video_fail"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_marginLeft="15dp"
             android:gravity="center"
             android:padding="5dp"
-            android:text="视频"
+            android:text="视频失败"
+            android:textColor="@color/black" />
+
+        <TextView
+            android:id="@+id/tv_main_video_success"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="15dp"
+            android:gravity="center"
+            android:padding="5dp"
+            android:text="视频成功"
             android:textColor="@color/black" />
     </LinearLayout>
 

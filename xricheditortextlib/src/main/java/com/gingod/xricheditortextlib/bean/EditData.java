@@ -11,6 +11,8 @@ public class EditData {
     public final static int TEXT = 252;
     public final static int IMAGE = 252 + 1;
     public final static int VIDEO = 252 + 2;
+    public final static int UPLOAD_VIDEO_FAIL = 252 + 3;
+    public final static int UPLOAD_VIDEO_SUCCESS = 252 + 4;
     public String title;
     public String name;
     public String time;
@@ -33,6 +35,7 @@ public class EditData {
         public String videoPath;
         public String videoPicPath;
         public int videoProgress;
+        public String videoProgressStr;
         public String localVideoPath;
     }
 

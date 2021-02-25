@@ -12,6 +12,8 @@ import com.gingod.xricheditortextlib.RichTextEditor;
 import com.gingod.xricheditortextlib.RichTextUtils;
 import com.gingod.xricheditortextlib.bean.EditData;
 
+import org.jetbrains.annotations.NotNull;
+
 import butterknife.BindView;
 import butterknife.OnClick;
 
@@ -20,6 +22,7 @@ public class MainActivity extends BaseSimpleActivity {
     RichTextEditor rte_main;
 
     private String imagePath = "http://img.hb.aicdn.com/a1f189d4a420ef1927317ebfacc2ae055ff9f212148fb-iEyFWS_fw658";
+    private int num = 0;
 
     @Override
     protected int getLayoutId() {
@@ -64,21 +67,60 @@ public class MainActivity extends BaseSimpleActivity {
         }
     }
 
-    @OnClick({R.id.tv_main_pic, R.id.tv_main_video})
+    @OnClick({R.id.tv_main_pic, R.id.tv_main_video_fail, R.id.tv_main_video_success})
     public void onClick(View v) {
-        EditData.Data imageData = new EditData.Data();
-        imageData.imagePath = imagePath;
-        imageData.videoPicPath = imagePath + "111";
-        imageData.localVideoPath = imagePath;
+        EditData.Data imageData = getImageData();
         switch (v.getId()) {
             case R.id.tv_main_pic:
-                imageData.type = EditData.IMAGE;
+                rte_main.insertImageOrVideo(imageData);
                 break;
-            case R.id.tv_main_video:
-                imageData.type = EditData.VIDEO;
+            case R.id.tv_main_video_success:
+                success(imageData);
+                break;
+            case R.id.tv_main_video_fail:
+                fail(imageData);
                 break;
         }
+    }
+
+    private void success(EditData.Data imageData) {
+        imageData.type = EditData.VIDEO;
         rte_main.insertImageOrVideo(imageData);
+        mBaseHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                imageData.videoProgress++;
+                imageData.videoProgressStr = imageData.videoProgress + "%";
+                if (imageData.videoProgress == 100) {
+                    imageData.videoProgress = EditData.UPLOAD_VIDEO_SUCCESS;
+                } else {
+                    success(imageData);
+                }
+                rte_main.insertImageOrVideo(imageData);
+            }
+        }, 252);
+    }
+
+    private void fail(EditData.Data imageData) {
+        imageData.type = EditData.VIDEO;
+        rte_main.insertImageOrVideo(imageData);
+        mBaseHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                imageData.type = EditData.VIDEO;
+                imageData.videoProgress = EditData.UPLOAD_VIDEO_FAIL;
+                rte_main.insertImageOrVideo(imageData);
+            }
+        }, 252 * 10);
+    }
+
+    @NotNull
+    private EditData.Data getImageData() {
+        EditData.Data imageData = new EditData.Data();
+        imageData.imagePath = imagePath;
+        imageData.localVideoPath = imagePath + (num++);
+        imageData.type = EditData.IMAGE;
+        return imageData;
     }
 
     @Override
