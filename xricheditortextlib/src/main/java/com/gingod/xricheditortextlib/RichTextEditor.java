@@ -11,7 +11,6 @@ import android.text.TextUtils;
 import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -77,10 +76,6 @@ public class RichTextEditor extends ScrollView {
      */
     private int disappearingImageIndex = 0;
     /**
-     * 图片地址集合
-     */
-    private ArrayList<String> imagePaths;
-    /**
      * 关键词高亮
      */
     private String keywords;
@@ -124,7 +119,6 @@ public class RichTextEditor extends ScrollView {
         super(context, attrs, defStyleAttr);
 
         try {
-            imagePaths = new ArrayList<>();
             inflater = LayoutInflater.from(context);
             EDIT_PADDING = dip2px(context, 10);
 
@@ -312,7 +306,6 @@ public class RichTextEditor extends ScrollView {
                     if (onRtImageDeleteListener != null) {
                         onRtImageDeleteListener.onRtImageDelete(editData.imagePath);
                     }
-                    imagePaths.remove(editData.imagePath);
                 }
                 allLayout.removeView(view);
                 //合并上下EditText内容
@@ -378,7 +371,7 @@ public class RichTextEditor extends ScrollView {
      * 生成图片View
      */
     private RelativeLayout createImageLayout() {
-        RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.edit_imageview, null);
+        RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.rich_imageview, null);
         try {
             layout.setTag(viewTagIndex++);
             View closeView = layout.findViewById(R.id.image_close);
@@ -395,10 +388,31 @@ public class RichTextEditor extends ScrollView {
     /**
      * 插入一张图片
      */
-    public void insertImage(String imagePath) {
-        if (TextUtils.isEmpty(imagePath)) {
+    public void insertImage(EditData.Data imageData) {
+        //图片信息不存在
+        if (imageData == null || (TextUtils.isEmpty(imageData.imagePath) && TextUtils.isEmpty(imageData.localImagePath))) {
             return;
         }
+        imageData.type = EditData.IMAGE;
+        insertView(imageData);
+    }
+
+    /**
+     * 插入一个视频
+     */
+    public void insertOrUpdateVideo(EditData.Data videoData) {
+        //视频信息不存在
+        if (videoData == null || (TextUtils.isEmpty(videoData.localVideoPath) && TextUtils.isEmpty(videoData.videoPath))) {
+            return;
+        }
+        videoData.type = EditData.VIDEO;
+        insertView(videoData);
+    }
+
+    /**
+     * 插入一张图片
+     */
+    public void insertView(EditData.Data imageData) {
         try {
             //lastFocusEdit获取焦点的EditText
             String lastEditStr = lastFocusEdit.getText().toString();
@@ -415,16 +429,16 @@ public class RichTextEditor extends ScrollView {
                 //如果当前获取焦点的EditText为空，直接在EditText下方插入图片，并且插入空的EditText
                 addEditTextAtIndex(lastEditIndex + 1, "");
                 //会将上个插入的Edittext挤下去
-                addImageViewAtIndex(lastEditIndex + 1, imagePath);
+                addViewAtIndex(lastEditIndex + 1, imageData);
             } else if (editStr1.length() == 0) {
                 //如果光标已经顶在了editText的最前面，则直接插入图片，并且EditText下移即可
-                addImageViewAtIndex(lastEditIndex, imagePath);
+                addViewAtIndex(lastEditIndex, imageData);
                 //同时插入一个空的EditText，防止插入多张图片无法写文字
                 addEditTextAtIndex(lastEditIndex + 1, "");
             } else if (editStr2.length() == 0) {
                 // 如果光标已经顶在了editText的最末端，则需要添加新的imageView和EditText
                 addEditTextAtIndex(lastEditIndex + 1, "");
-                addImageViewAtIndex(lastEditIndex + 1, imagePath);
+                addViewAtIndex(lastEditIndex + 1, imageData);
             } else {
                 //如果光标已经顶在了editText的最中间，则需要分割字符串，分割成两个EditText，并在两个EditText中间插入图片
                 //把光标前面的字符串保留，设置给当前获得焦点的EditText（此为分割出来的第一个EditText）
@@ -434,7 +448,7 @@ public class RichTextEditor extends ScrollView {
                 //在第二个EditText的位置插入一个空的EditText，以便连续插入多张图片时，有空间写文字，第二个EditText下移
                 addEditTextAtIndex(lastEditIndex + 1, "");
                 //在空的EditText的位置插入图片布局，空的EditText下移
-                addImageViewAtIndex(lastEditIndex + 1, imagePath);
+                addViewAtIndex(lastEditIndex + 1, imageData);
             }
             hideKeyBoard();
         } catch (Exception e) {
@@ -504,17 +518,32 @@ public class RichTextEditor extends ScrollView {
     }
 
     /**
+     * 在特定位置添加View
+     */
+    public void addViewAtIndex(final int index, final EditData.Data editData) {
+        if (EditData.IMAGE == editData.type) {
+            addImageViewAtIndex(index, editData);
+        }
+    }
+
+    /**
      * 在特定位置添加ImageView
      */
-    public void addImageViewAtIndex(final int index, final String imagePath) {
-        if (TextUtils.isEmpty(imagePath)) {
+    public void addImageViewAtIndex(final int index, final EditData.Data imageData) {
+        //图片信息不存在
+        if (imageData == null || (TextUtils.isEmpty(imageData.imagePath) && TextUtils.isEmpty(imageData.localImagePath))) {
             return;
         }
         try {
-            imagePaths.add(imagePath);
             final RelativeLayout imageLayout = createImageLayout();
             DataImageView imageView = imageLayout.findViewById(R.id.edit_imageView);
+
+            String imagePath = imageData.imagePath;
+            if (TextUtils.isEmpty(imagePath)) {
+                imagePath = imageData.localImagePath;
+            }
             imageView.setAbsolutePath(imagePath);
+            imageView.setImageData(imageData);
             RichTextUtils.getInstance().loadImage(imagePath, imageView, rtImageHeight);
 
 //			// 调整imageView的高度，根据宽度等比获得高度
@@ -590,7 +619,7 @@ public class RichTextEditor extends ScrollView {
 
                     //只有文字为空, 图片数据存在
                 } else if (TextUtils.isEmpty(data.inputStr)) {
-                    insertImage(data.imagePath);
+                    insertImage(data);
                     //只有图片数据为空, 文字存在
                 } else if (TextUtils.isEmpty(data.imagePath)) {
                     //最后一个为EditText且内容为空, 则直接设置内容

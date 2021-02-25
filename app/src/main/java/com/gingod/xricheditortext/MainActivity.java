@@ -24,7 +24,7 @@ public class MainActivity extends BaseSimpleActivity {
     @BindView(R.id.tv_main_pic)
     TextView tv_main_pic;
 
-    private String imagePath = "http://b.zol-img.com.cn/sjbizhi/images/10/640x1136/1572123845476.jpg";
+    private String imagePath = "http://img.hb.aicdn.com/a1f189d4a420ef1927317ebfacc2ae055ff9f212148fb-iEyFWS_fw658";
 
     @Override
     protected int getLayoutId() {
@@ -64,7 +64,10 @@ public class MainActivity extends BaseSimpleActivity {
 
     @OnClick(R.id.tv_main_pic)
     public void onClick() {
-        rte_main.insertImage(imagePath);
+        EditData.Data imageData = new EditData.Data();
+        imageData.type = EditData.IMAGE;
+        imageData.imagePath = imagePath;
+        rte_main.insertImage(imageData);
     }
 
     @Override
@@ -74,7 +77,7 @@ public class MainActivity extends BaseSimpleActivity {
         BasisSPUtils.setStringPreferences(mActivity, "editData", mGson.toJson(editData));
         String data = mGson.toJson(editData);
         Log.e("123", data);
-        String data1 = data.replaceAll("\\\\n|\\\\r\\\\n|\\\\r","123");
+        String data1 = data.replaceAll("\\\\n|\\\\r\\\\n|\\\\r", "123");
         Log.e("123", data1);
         super.onDestroy();
     }

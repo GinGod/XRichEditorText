@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.gingod.xricheditortextlib.VideoRelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="200dp">
+
+    <com.gingod.xricheditortextlib.DataImageView
+        android:id="@+id/edit_imageView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="200dp"
+        android:src="@drawable/img_load_fail" />
+
+    <ImageView
+        android:id="@+id/image_close"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:scaleType="centerInside"
+        android:src="@mipmap/delete" />
+
+    <ImageView
+        android:id="@+id/video_play"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:layout_centerInParent="true"
+        android:scaleType="centerCrop"
+        android:src="@drawable/video_play" />
+
+    <LinearLayout
+        android:id="@+id/ll_video_upload"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:background="#10525252"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:text="上传中... "
+                android:textColor="#000000"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tv_video_progress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:text="20%"
+                android:textColor="#000000"
+                android:textSize="13sp" />
+
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/pb_progress_video"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:background="#102c91a0"
+            android:progress="30"
+            android:visibility="visible" />
+
+    </LinearLayout>
+
+</com.gingod.xricheditortextlib.VideoRelativeLayout>

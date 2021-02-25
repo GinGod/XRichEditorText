@@ -10,6 +10,8 @@ import android.util.AttributeSet;
 
 import androidx.appcompat.widget.AppCompatImageView;
 
+import com.gingod.xricheditortextlib.bean.EditData;
+
 /**
  * 自定义ImageView，可以存放Path等信息(可画边框)
  *
@@ -22,9 +24,13 @@ public class DataImageView extends AppCompatImageView {
     private boolean showBorder = false;
     private int borderColor = Color.GRAY;
     private int borderWidth = 5;
-
-    private String absolutePath;
     private Paint paint;
+
+    /**
+     * 图片或者视频信息
+     */
+    private EditData.Data imageData;
+    private String absolutePath;
 
     public DataImageView(Context context) {
         this(context, null);
@@ -48,6 +54,14 @@ public class DataImageView extends AppCompatImageView {
         paint.setStrokeWidth(borderWidth);
         //设置画笔的风格-不能设成填充FILL否则看不到图片了
         paint.setStyle(Paint.Style.STROKE);
+    }
+
+    public EditData.Data getImageData() {
+        return imageData;
+    }
+
+    public void setImageData(EditData.Data imageData) {
+        this.imageData = imageData;
     }
 
     public String getAbsolutePath() {
