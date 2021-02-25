@@ -8,8 +8,4 @@
         android:startColor="@color/info_gray"
         android:type="linear" />
     <corners android:radius="5dp" />
-
-    <size
-        android:width="85dp"
-        android:height="152dp" />
 </shape>

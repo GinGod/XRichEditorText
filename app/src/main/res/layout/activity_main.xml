@@ -17,6 +17,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="52dp"
+        android:background="@color/gray"
         android:orientation="horizontal">
 
         <TextView
@@ -26,6 +27,16 @@
             android:gravity="center"
             android:padding="5dp"
             android:text="图片"
+            android:textColor="@color/black" />
+
+        <TextView
+            android:id="@+id/tv_main_video"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="15dp"
+            android:gravity="center"
+            android:padding="5dp"
+            android:text="视频"
             android:textColor="@color/black" />
     </LinearLayout>
 

@@ -171,7 +171,11 @@ public class RichTextEditor extends ScrollView {
                     if (v instanceof DataImageView) {
                         DataImageView imageView = (DataImageView) v;
                         if (onRtImageClickListener != null) {
-                            onRtImageClickListener.onRtImageClick(imageView, imageView.getAbsolutePath());
+                            if (imageView.getImageData().type == EditData.IMAGE) {
+                                onRtImageClickListener.onRtImageClick(imageView, imageView.getImageData(), imageView.getAbsolutePath());
+                            } else if (imageView.getImageData().type == EditData.VIDEO) {
+                                onRtImageClickListener.onRtVideoPlayClick(imageView, imageView.getImageData(), imageView.getAbsolutePath());
+                            }
                         }
                         //点击删除
                     } else if (v instanceof ImageView) {
@@ -347,7 +351,7 @@ public class RichTextEditor extends ScrollView {
     /**
      * 生成文本输入框
      */
-    public EditText createEditText(String hint, int paddingTop) {
+    private EditText createEditText(String hint, int paddingTop) {
         EditText editText = (EditText) inflater.inflate(R.layout.rich_edittext, null);
         try {
             editText.setOnKeyListener(keyListener);
@@ -367,9 +371,15 @@ public class RichTextEditor extends ScrollView {
     /**
      * 生成图片View
      */
-    private RelativeLayout createImageLayout() {
-        RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.rich_imageview, null);
+    private RelativeLayout createImageOrVideoLayout(EditData.Data imageData) {
+        RelativeLayout layout = null;
         try {
+            if (imageData.type == EditData.IMAGE) {
+                layout = (RelativeLayout) inflater.inflate(R.layout.rich_imageview, null);
+            }
+            if (imageData.type == EditData.VIDEO) {
+                layout = (RelativeLayout) inflater.inflate(R.layout.rich_viedoview, null);
+            }
             layout.setTag(viewTagIndex++);
             View closeView = layout.findViewById(R.id.image_close);
             closeView.setTag(layout.getTag());
@@ -383,33 +393,26 @@ public class RichTextEditor extends ScrollView {
     }
 
     /**
-     * 插入一张图片
+     * 插入一张图片或者视频
      */
-    public void insertImage(EditData.Data imageData) {
-        //图片信息不存在
-        if (imageData == null || (TextUtils.isEmpty(imageData.imagePath) && TextUtils.isEmpty(imageData.localImagePath))) {
+    public void insertImageOrVideo(EditData.Data imageData) {
+        //信息不存在
+        if (imageData == null) {
             return;
         }
-        imageData.type = EditData.IMAGE;
+        if (imageData.type == EditData.IMAGE && TextUtils.isEmpty(imageData.imagePath) && TextUtils.isEmpty(imageData.localImagePath)) {
+            return;
+        }
+        if (imageData.type == EditData.VIDEO && TextUtils.isEmpty(imageData.localVideoPath) && TextUtils.isEmpty(imageData.videoPath)) {
+            return;
+        }
         insertView(imageData);
     }
 
     /**
-     * 插入一个视频
+     * 插入一张图片或者视频
      */
-    public void insertOrUpdateVideo(EditData.Data videoData) {
-        //视频信息不存在
-        if (videoData == null || (TextUtils.isEmpty(videoData.localVideoPath) && TextUtils.isEmpty(videoData.videoPath))) {
-            return;
-        }
-        videoData.type = EditData.VIDEO;
-        insertView(videoData);
-    }
-
-    /**
-     * 插入一张图片
-     */
-    public void insertView(EditData.Data imageData) {
+    private void insertView(EditData.Data imageData) {
         try {
             //lastFocusEdit获取焦点的EditText
             String lastEditStr = lastFocusEdit.getText().toString();
@@ -460,7 +463,7 @@ public class RichTextEditor extends ScrollView {
      * @param text   需要显示的文字
      * @return spannable 处理完后的结果，记得不要toString()，否则没有效果
      */
-    public static SpannableStringBuilder highlight(String text, String target) {
+    private static SpannableStringBuilder highlight(String text, String target) {
         SpannableStringBuilder spannable = new SpannableStringBuilder(text);
         CharacterStyle span;
         try {
@@ -487,7 +490,7 @@ public class RichTextEditor extends ScrollView {
      * @param index   位置
      * @param editStr EditText显示的文字
      */
-    public void addEditTextAtIndex(final int index, CharSequence editStr) {
+    private void addEditTextAtIndex(final int index, CharSequence editStr) {
         try {
             EditText editText2 = createEditText("输入文字", EDIT_PADDING);
             //搜索关键词高亮
@@ -517,22 +520,54 @@ public class RichTextEditor extends ScrollView {
     /**
      * 在特定位置添加View
      */
-    public void addViewAtIndex(final int index, final EditData.Data editData) {
+    private void addViewAtIndex(final int index, final EditData.Data editData) {
         if (EditData.IMAGE == editData.type) {
             addImageViewAtIndex(index, editData);
+        } else if (EditData.VIDEO == editData.type) {
+            addVideoViewAtIndex(index, editData);
         }
+    }
+
+    /**
+     * 在特定位置添加video
+     */
+    private void addVideoViewAtIndex(final int index, final EditData.Data imageData) {
+        try {
+            final RelativeLayout imageLayout = createImageOrVideoLayout(imageData);
+            DataImageView imageView = imageLayout.findViewById(R.id.edit_imageView);
+            ImageView imageViewPlay = imageLayout.findViewById(R.id.video_play);
+            imageViewPlay.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (onRtImageClickListener != null) {
+                        onRtImageClickListener.onRtVideoPlayClick(imageView, imageView.getImageData(), imageView.getAbsolutePath());
+                    }
+                }
+            });
+
+            String imagePath = imageData.videoPicPath;
+            if (TextUtils.isEmpty(imagePath)) {
+                imagePath = imageData.localVideoPath;
+            }
+            if (TextUtils.isEmpty(imagePath)) {
+                imagePath = imageData.videoPath;
+            }
+            imageView.setAbsolutePath(imagePath);
+            imageView.setImageData(imageData);
+            RichTextUtils.getInstance().loadImage(imageData, imagePath, imageView, rtImageHeight);
+            allLayout.addView(imageLayout, index);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     /**
      * 在特定位置添加ImageView
      */
-    public void addImageViewAtIndex(final int index, final EditData.Data imageData) {
-        //图片信息不存在
-        if (imageData == null || (TextUtils.isEmpty(imageData.imagePath) && TextUtils.isEmpty(imageData.localImagePath))) {
-            return;
-        }
+    private void addImageViewAtIndex(final int index, final EditData.Data imageData) {
         try {
-            final RelativeLayout imageLayout = createImageLayout();
+            final RelativeLayout imageLayout = createImageOrVideoLayout(imageData);
             DataImageView imageView = imageLayout.findViewById(R.id.edit_imageView);
 
             String imagePath = imageData.imagePath;
@@ -541,7 +576,7 @@ public class RichTextEditor extends ScrollView {
             }
             imageView.setAbsolutePath(imagePath);
             imageView.setImageData(imageData);
-            RichTextUtils.getInstance().loadImage(imagePath, imageView, rtImageHeight);
+            RichTextUtils.getInstance().loadImage(imageData, imagePath, imageView, rtImageHeight);
 
 //			// 调整imageView的高度，根据宽度等比获得高度
 //			int imageHeight ; //解决连续加载多张图片导致后续图片都跟第一张高度相同的问题
@@ -619,8 +654,8 @@ public class RichTextEditor extends ScrollView {
             for (int i = 0; i < editData.size(); i++) {
                 EditData.Data data = editData.get(i);
                 //图片
-                if (data.type == EditData.IMAGE) {
-                    insertImage(data);
+                if (data.type == EditData.IMAGE || data.type == EditData.VIDEO) {
+                    insertImageOrVideo(data);
                     //文字
                 } else if (data.type == EditData.TEXT) {
                     //最后一个为EditText且内容为空, 则直接设置内容
@@ -647,7 +682,7 @@ public class RichTextEditor extends ScrollView {
     /**
      * 隐藏软键盘
      */
-    public void hideKeyBoard() {
+    private void hideKeyBoard() {
         try {
             InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
             if (imm != null && lastFocusEdit != null) {
@@ -679,57 +714,9 @@ public class RichTextEditor extends ScrollView {
     /**
      * 获取最后一个view位置
      */
-    public int getLastIndex() {
+    private int getLastIndex() {
         int childCount = allLayout.getChildCount();
         return childCount;
-    }
-
-    public int getRtImageHeight() {
-        return rtImageHeight;
-    }
-
-    public void setRtImageHeight(int rtImageHeight) {
-        this.rtImageHeight = rtImageHeight;
-    }
-
-    public int getRtImageBottom() {
-        return rtImageBottom;
-    }
-
-    public void setRtImageBottom(int rtImageBottom) {
-        this.rtImageBottom = rtImageBottom;
-    }
-
-    public String getRtTextInitHint() {
-        return rtTextInitHint;
-    }
-
-    public void setRtTextInitHint(String rtTextInitHint) {
-        this.rtTextInitHint = rtTextInitHint;
-    }
-
-    public int getRtTextSize() {
-        return rtTextSize;
-    }
-
-    public void setRtTextSize(int rtTextSize) {
-        this.rtTextSize = rtTextSize;
-    }
-
-    public int getRtTextColor() {
-        return rtTextColor;
-    }
-
-    public void setRtTextColor(int rtTextColor) {
-        this.rtTextColor = rtTextColor;
-    }
-
-    public int getRtTextLineSpace() {
-        return rtTextLineSpace;
-    }
-
-    public void setRtTextLineSpace(int rtTextLineSpace) {
-        this.rtTextLineSpace = rtTextLineSpace;
     }
 
     public interface OnRtImageDeleteListener {
@@ -750,9 +737,19 @@ public class RichTextEditor extends ScrollView {
          * 图片点击查看
          *
          * @param view
+         * @param imageData
          * @param imagePath
          */
-        void onRtImageClick(View view, String imagePath);
+        void onRtImageClick(View view, EditData.Data imageData, String imagePath);
+
+        /**
+         * 视频播放点击
+         *
+         * @param view
+         * @param imageData
+         * @param imagePath
+         */
+        void onRtVideoPlayClick(View view, EditData.Data imageData, String imagePath);
     }
 
     public void setOnRtImageClickListener(OnRtImageClickListener onRtImageClickListener) {

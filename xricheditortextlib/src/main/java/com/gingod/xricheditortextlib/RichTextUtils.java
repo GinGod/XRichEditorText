@@ -2,6 +2,8 @@ package com.gingod.xricheditortextlib;
 
 import android.widget.ImageView;
 
+import com.gingod.xricheditortextlib.bean.EditData;
+
 /**
  * 图片加载框架
  *
@@ -26,10 +28,10 @@ public class RichTextUtils {
         this.imageLoader = imageLoader;
     }
 
-    public void loadImage(String imagePath, ImageView imageView, int imageHeight) {
+    public void loadImage(EditData.Data imageData, String imagePath, ImageView imageView, int imageHeight) {
         try {
             if (imageLoader != null) {
-                imageLoader.loadImage(imagePath, imageView, imageHeight);
+                imageLoader.loadImage(imageData, imagePath, imageView, imageHeight);
             }
         } catch (Exception e) {
             e.printStackTrace();

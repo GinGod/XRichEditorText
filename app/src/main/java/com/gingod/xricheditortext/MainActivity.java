@@ -4,7 +4,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -13,16 +12,12 @@ import com.gingod.xricheditortextlib.RichTextEditor;
 import com.gingod.xricheditortextlib.RichTextUtils;
 import com.gingod.xricheditortextlib.bean.EditData;
 
-import java.util.List;
-
 import butterknife.BindView;
 import butterknife.OnClick;
 
 public class MainActivity extends BaseSimpleActivity {
     @BindView(R.id.rte_main)
     RichTextEditor rte_main;
-    @BindView(R.id.tv_main_pic)
-    TextView tv_main_pic;
 
     private String imagePath = "http://img.hb.aicdn.com/a1f189d4a420ef1927317ebfacc2ae055ff9f212148fb-iEyFWS_fw658";
 
@@ -35,15 +30,22 @@ public class MainActivity extends BaseSimpleActivity {
     protected void initValues() {
         RichTextUtils.getInstance().setImageLoader(new IImageLoader() {
             @Override
-            public void loadImage(String imagePath, ImageView imageView, int imageHeight) {
-                Glide.with(mActivity).load(imagePath).into(imageView);
+            public void loadImage(EditData.Data imageData, String imagePath, ImageView imageView, int imageHeight) {
+                Glide.with(mActivity).load(imagePath)
+                        .error(imageData.type == EditData.IMAGE ? com.gingod.xricheditortextlib.R.drawable.img_load_fail : com.gingod.xricheditortextlib.R.drawable.gray_rect_bg_gradient)
+                        .into(imageView);
             }
         });
 
         rte_main.setOnRtImageClickListener(new RichTextEditor.OnRtImageClickListener() {
             @Override
-            public void onRtImageClick(View view, String imagePath) {
+            public void onRtImageClick(View view, EditData.Data imageData, String imagePath) {
                 Toast.makeText(MainActivity.this, "图片点击!", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onRtVideoPlayClick(View view, EditData.Data imageData, String imagePath) {
+                Toast.makeText(MainActivity.this, "视频播放!", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -62,12 +64,21 @@ public class MainActivity extends BaseSimpleActivity {
         }
     }
 
-    @OnClick(R.id.tv_main_pic)
-    public void onClick() {
+    @OnClick({R.id.tv_main_pic, R.id.tv_main_video})
+    public void onClick(View v) {
         EditData.Data imageData = new EditData.Data();
-        imageData.type = EditData.IMAGE;
         imageData.imagePath = imagePath;
-        rte_main.insertImage(imageData);
+        imageData.videoPicPath = imagePath + "111";
+        imageData.localVideoPath = imagePath;
+        switch (v.getId()) {
+            case R.id.tv_main_pic:
+                imageData.type = EditData.IMAGE;
+                break;
+            case R.id.tv_main_video:
+                imageData.type = EditData.VIDEO;
+                break;
+        }
+        rte_main.insertImageOrVideo(imageData);
     }
 
     @Override
