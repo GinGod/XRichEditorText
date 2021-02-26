@@ -12,7 +12,12 @@
         android:id="@+id/rte_main"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        app:rt_editor_image_height="500dp"
+        app:rt_editor_text_color="#212121"
+        app:rt_editor_text_init_hint="输入文字"
+        app:rt_editor_text_line_space="16dp"
+        app:rt_editor_text_size="16sp" />
 
     <LinearLayout
         android:layout_width="match_parent"

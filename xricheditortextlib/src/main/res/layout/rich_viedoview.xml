@@ -68,7 +68,7 @@
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
             android:layout_height="3dp"
-            android:background="#102c91a0"
+            android:background="#FFFFFF"
             android:progress="0"
             android:visibility="visible" />
 

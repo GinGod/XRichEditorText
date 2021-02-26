@@ -21,7 +21,7 @@ public class MainActivity extends BaseSimpleActivity {
     @BindView(R.id.rte_main)
     RichTextEditor rte_main;
 
-    private String imagePath = "http://img.hb.aicdn.com/a1f189d4a420ef1927317ebfacc2ae055ff9f212148fb-iEyFWS_fw658";
+    private String imagePath = "http://img.hb.aicdn.com/eca438704a81dd1fa83347cb8ec1a49ec16d2802c846-laesx2_fw658";
     private String VideoPicPath = "http://img.hb.aicdn.com/e22ee5730f152c236c69e2242b9d9114852be2bd8629-EKEnFD_fw658";
     private int num = 0;
 
@@ -32,6 +32,7 @@ public class MainActivity extends BaseSimpleActivity {
 
     @Override
     protected void initValues() {
+        //设置图片加载框架
         RichTextUtils.getInstance().setImageLoader(new IImageLoader() {
             @Override
             public void loadImage(RichEditData.Data imageData, String imagePath, ImageView imageView, int imageHeight) {
@@ -40,7 +41,7 @@ public class MainActivity extends BaseSimpleActivity {
                         .into(imageView);
             }
         });
-
+        //设置图片视频点击操作
         rte_main.setOnRtImageClickListener(new RichTextEditor.OnRtImageClickListener() {
             @Override
             public void onRtImageClick(View view, RichEditData.Data imageData, String imagePath) {
@@ -52,14 +53,15 @@ public class MainActivity extends BaseSimpleActivity {
                 Toast.makeText(MainActivity.this, "视频播放!", Toast.LENGTH_SHORT).show();
             }
         });
-
+        //设置图片视频删除操作
         rte_main.setOnRtImageDeleteListener(new RichTextEditor.OnRtImageDeleteListener() {
             @Override
             public void onRtImageDelete(RichEditData.Data imageData) {
+                //视频删除时, 停止上传操作
                 Toast.makeText(MainActivity.this, "图片删除", Toast.LENGTH_SHORT).show();
             }
         });
-
+        //还原记录
         String editData = BasisSPUtils.getStringPreferences(mActivity, "editData", "");
         if (!TextUtils.isEmpty(editData)) {
             Log.e("editData", editData);
@@ -72,18 +74,24 @@ public class MainActivity extends BaseSimpleActivity {
     public void onClick(View v) {
         RichEditData.Data imageData = getImageData();
         switch (v.getId()) {
+            //插入图片
             case R.id.tv_main_pic:
                 rte_main.insertImageOrVideo(imageData);
                 break;
+            //插入上传成功视频(包含上传进度操作)
             case R.id.tv_main_video_success:
                 success(imageData);
                 break;
+            //插入上传失败视频
             case R.id.tv_main_video_fail:
                 fail(imageData);
                 break;
         }
     }
 
+    /**
+     * 插入上传成功视频(包含上传进度操作)
+     */
     private void success(RichEditData.Data imageData) {
         imageData.type = RichEditData.VIDEO;
         rte_main.insertImageOrVideo(imageData);
@@ -103,6 +111,9 @@ public class MainActivity extends BaseSimpleActivity {
         }, 52);
     }
 
+    /**
+     * 插入上传失败视频
+     */
     private void fail(RichEditData.Data imageData) {
         imageData.type = RichEditData.VIDEO;
         rte_main.insertImageOrVideo(imageData);
@@ -116,7 +127,11 @@ public class MainActivity extends BaseSimpleActivity {
         }, 252 * 10);
     }
 
-    @NotNull
+    /**
+     * 插入图片或者视频数据
+     *
+     * @return
+     */
     private RichEditData.Data getImageData() {
         RichEditData.Data imageData = new RichEditData.Data();
         imageData.imagePath = imagePath;
@@ -127,11 +142,13 @@ public class MainActivity extends BaseSimpleActivity {
 
     @Override
     protected void onDestroy() {
+        //记录操作的数据
         RichEditData richEditData = new RichEditData();
         richEditData.content = rte_main.getEditData();
-        BasisSPUtils.setStringPreferences(mActivity, "editData", mGson.toJson(richEditData));
         String data = mGson.toJson(richEditData);
+        BasisSPUtils.setStringPreferences(mActivity, "editData", data);
         Log.e("123", data);
+        //测试回车键替换
         String data1 = data.replaceAll("\\\\n|\\\\r\\\\n|\\\\r", "123");
         Log.e("123", data1);
         super.onDestroy();
