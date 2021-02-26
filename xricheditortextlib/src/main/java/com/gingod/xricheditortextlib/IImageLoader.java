@@ -2,7 +2,7 @@ package com.gingod.xricheditortextlib;
 
 import android.widget.ImageView;
 
-import com.gingod.xricheditortextlib.bean.EditData;
+import com.gingod.xricheditortextlib.bean.RichEditData;
 
 /**
  * 图片加载
@@ -10,5 +10,5 @@ import com.gingod.xricheditortextlib.bean.EditData;
  * @author
  */
 public interface IImageLoader {
-    void loadImage(EditData.Data imageData, String imagePath, ImageView imageView, int imageHeight);
+    void loadImage(RichEditData.Data imageData, String imagePath, ImageView imageView, int imageHeight);
 }

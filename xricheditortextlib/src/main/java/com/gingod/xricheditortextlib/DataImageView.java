@@ -1,7 +1,6 @@
 package com.gingod.xricheditortextlib;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -10,7 +9,7 @@ import android.util.AttributeSet;
 
 import androidx.appcompat.widget.AppCompatImageView;
 
-import com.gingod.xricheditortextlib.bean.EditData;
+import com.gingod.xricheditortextlib.bean.RichEditData;
 
 /**
  * 自定义ImageView，可以存放Path等信息(可画边框)
@@ -29,7 +28,7 @@ public class DataImageView extends AppCompatImageView {
     /**
      * 图片或者视频信息
      */
-    private EditData.Data imageData;
+    private RichEditData.Data imageData;
     private String absolutePath;
 
     public DataImageView(Context context) {
@@ -56,11 +55,11 @@ public class DataImageView extends AppCompatImageView {
         paint.setStyle(Paint.Style.STROKE);
     }
 
-    public EditData.Data getImageData() {
+    public RichEditData.Data getImageData() {
         return imageData;
     }
 
-    public void setImageData(EditData.Data imageData) {
+    public void setImageData(RichEditData.Data imageData) {
         this.imageData = imageData;
     }
 

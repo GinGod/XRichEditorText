@@ -9,7 +9,7 @@ import com.gingod.xricheditortextlib.DataImageView;
 /**
  * 视频控件信息
  */
-public class VideoViewBean {
+public class RichVideoViewBean {
     public ProgressBar pb_progress_video;
     public TextView tv_video_state;
     public TextView tv_video_progress;

@@ -26,8 +26,8 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.gingod.xricheditortextlib.bean.EditData;
-import com.gingod.xricheditortextlib.bean.VideoViewBean;
+import com.gingod.xricheditortextlib.bean.RichEditData;
+import com.gingod.xricheditortextlib.bean.RichVideoViewBean;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +44,7 @@ public class RichTextEditor extends ScrollView {
     /**
      * 视频控件信息
      */
-    private List<VideoViewBean> videoViewBeans = new ArrayList<>();
+    private List<RichVideoViewBean> richVideoViewBeans = new ArrayList<>();
     /**
      * edittext常规padding是10dp
      */
@@ -178,9 +178,9 @@ public class RichTextEditor extends ScrollView {
                     if (v instanceof DataImageView) {
                         DataImageView imageView = (DataImageView) v;
                         if (onRtImageClickListener != null) {
-                            if (imageView.getImageData().type == EditData.IMAGE) {
+                            if (imageView.getImageData().type == RichEditData.IMAGE) {
                                 onRtImageClickListener.onRtImageClick(imageView, imageView.getImageData(), imageView.getAbsolutePath());
-                            } else if (imageView.getImageData().type == EditData.VIDEO) {
+                            } else if (imageView.getImageData().type == RichEditData.VIDEO) {
                                 onRtImageClickListener.onRtVideoPlayClick(imageView, imageView.getImageData(), imageView.getAbsolutePath());
                             }
                         }
@@ -311,13 +311,22 @@ public class RichTextEditor extends ScrollView {
             if (!mTransitioner.isRunning()) {
                 disappearingImageIndex = allLayout.indexOfChild(view);
                 DataImageView dataImageView = view.findViewById(R.id.edit_imageView);
-                EditData.Data editData = dataImageView.getImageData();
+                RichEditData.Data editData = dataImageView.getImageData();
                 if (onRtImageDeleteListener != null) {
                     onRtImageDeleteListener.onRtImageDelete(editData);
                 }
                 allLayout.removeView(view);
                 //合并上下EditText内容
                 mergeEditText();
+                //关闭视频时清空记录的信息
+                for (int i = 0; i < richVideoViewBeans.size(); i++) {
+                    RichVideoViewBean richVideoViewBean =  richVideoViewBeans.get(i);
+                    RichEditData.Data imageData1 = richVideoViewBean.edit_imageView.getImageData();
+                    //视频控件已经存在, 更新信息
+                    if (editData.localVideoPath.equals(imageData1.localVideoPath)) {
+                        richVideoViewBeans.remove(i);
+                    }
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -378,13 +387,13 @@ public class RichTextEditor extends ScrollView {
     /**
      * 生成图片View
      */
-    private RelativeLayout createImageOrVideoLayout(EditData.Data imageData) {
+    private RelativeLayout createImageOrVideoLayout(RichEditData.Data imageData) {
         RelativeLayout layout = null;
         try {
-            if (imageData.type == EditData.IMAGE) {
+            if (imageData.type == RichEditData.IMAGE) {
                 layout = (RelativeLayout) inflater.inflate(R.layout.rich_imageview, null);
             }
-            if (imageData.type == EditData.VIDEO) {
+            if (imageData.type == RichEditData.VIDEO) {
                 layout = (RelativeLayout) inflater.inflate(R.layout.rich_viedoview, null);
             }
             layout.setTag(viewTagIndex++);
@@ -402,38 +411,38 @@ public class RichTextEditor extends ScrollView {
     /**
      * 插入一张图片或者视频
      */
-    public void insertImageOrVideo(EditData.Data imageData) {
+    public void insertImageOrVideo(RichEditData.Data imageData) {
         //信息不存在
         if (imageData == null) {
             return;
         }
-        if (imageData.type == EditData.IMAGE && TextUtils.isEmpty(imageData.imagePath) && TextUtils.isEmpty(imageData.localImagePath)) {
+        if (imageData.type == RichEditData.IMAGE && TextUtils.isEmpty(imageData.imagePath) && TextUtils.isEmpty(imageData.localImagePath)) {
             return;
         }
-        if (imageData.type == EditData.VIDEO && TextUtils.isEmpty(imageData.localVideoPath) && TextUtils.isEmpty(imageData.videoPath)) {
+        if (imageData.type == RichEditData.VIDEO && TextUtils.isEmpty(imageData.localVideoPath) && TextUtils.isEmpty(imageData.videoPath)) {
             return;
         }
         //查看是否为视频上传更新
-        if (imageData.type == EditData.VIDEO) {
-            for (int i = 0; i < videoViewBeans.size(); i++) {
-                VideoViewBean videoViewBean = videoViewBeans.get(i);
-                EditData.Data imageData1 = videoViewBean.edit_imageView.getImageData();
+        if (imageData.type == RichEditData.VIDEO) {
+            for (int i = 0; i < richVideoViewBeans.size(); i++) {
+                RichVideoViewBean richVideoViewBean = richVideoViewBeans.get(i);
+                RichEditData.Data imageData1 = richVideoViewBean.edit_imageView.getImageData();
                 //视频控件已经存在, 更新信息
                 if (imageData.localVideoPath.equals(imageData1.localVideoPath)) {
                     //上传视频失败
-                    if (imageData.videoProgress == EditData.UPLOAD_VIDEO_FAIL) {
-                        videoViewBean.tv_video_state.setText("上传失败!");
-                        videoViewBean.tv_video_state.setTextColor(Color.RED);
-                        videoViewBean.tv_video_progress.setVisibility(GONE);
-                        videoViewBean.pb_progress_video.setProgress(0);
+                    if (imageData.videoProgress == RichEditData.UPLOAD_VIDEO_FAIL) {
+                        richVideoViewBean.tv_video_state.setText("上传失败!");
+                        richVideoViewBean.tv_video_state.setTextColor(Color.RED);
+                        richVideoViewBean.tv_video_progress.setVisibility(GONE);
+                        richVideoViewBean.pb_progress_video.setProgress(0);
                         //上传视频完成
-                    } else if (imageData.videoProgress == EditData.UPLOAD_VIDEO_SUCCESS) {
-                        videoViewBean.ll_video_upload.setVisibility(GONE);
-                        loadVideoPic(imageData, videoViewBean.edit_imageView);
+                    } else if (imageData.videoProgress == RichEditData.UPLOAD_VIDEO_SUCCESS) {
+                        richVideoViewBean.ll_video_upload.setVisibility(GONE);
+                        loadVideoPic(imageData, richVideoViewBean.edit_imageView);
                         //正在上传视频
                     } else {
-                        videoViewBean.pb_progress_video.setProgress(imageData.videoProgress);
-                        videoViewBean.tv_video_progress.setText(imageData.videoProgressStr);
+                        richVideoViewBean.pb_progress_video.setProgress(imageData.videoProgress);
+                        richVideoViewBean.tv_video_progress.setText(imageData.videoProgressStr);
                     }
                     return;
                 }
@@ -445,7 +454,7 @@ public class RichTextEditor extends ScrollView {
     /**
      * 插入一张图片或者视频
      */
-    private void insertView(EditData.Data imageData) {
+    private void insertView(RichEditData.Data imageData) {
         try {
             //lastFocusEdit获取焦点的EditText
             String lastEditStr = lastFocusEdit.getText().toString();
@@ -553,10 +562,10 @@ public class RichTextEditor extends ScrollView {
     /**
      * 在特定位置添加View
      */
-    private void addViewAtIndex(final int index, final EditData.Data editData) {
-        if (EditData.IMAGE == editData.type) {
+    private void addViewAtIndex(final int index, final RichEditData.Data editData) {
+        if (RichEditData.IMAGE == editData.type) {
             addImageViewAtIndex(index, editData);
-        } else if (EditData.VIDEO == editData.type) {
+        } else if (RichEditData.VIDEO == editData.type) {
             addVideoViewAtIndex(index, editData);
         }
     }
@@ -564,7 +573,7 @@ public class RichTextEditor extends ScrollView {
     /**
      * 在特定位置添加video
      */
-    private void addVideoViewAtIndex(final int index, final EditData.Data imageData) {
+    private void addVideoViewAtIndex(final int index, final RichEditData.Data imageData) {
         try {
             final RelativeLayout imageLayout = createImageOrVideoLayout(imageData);
             DataImageView imageView = imageLayout.findViewById(R.id.edit_imageView);
@@ -598,32 +607,32 @@ public class RichTextEditor extends ScrollView {
         TextView tv_video_progress = imageLayout.findViewById(R.id.tv_video_progress);
         ProgressBar pb_progress_video = imageLayout.findViewById(R.id.pb_progress_video);
         View ll_video_upload = imageLayout.findViewById(R.id.ll_video_upload);
-        VideoViewBean videoViewBean = new VideoViewBean();
-        videoViewBean.edit_imageView = imageView;
-        videoViewBean.tv_video_state = tv_video_state;
-        videoViewBean.tv_video_progress = tv_video_progress;
-        videoViewBean.pb_progress_video = pb_progress_video;
-        videoViewBean.ll_video_upload = ll_video_upload;
-        videoViewBeans.add(videoViewBean);
+        RichVideoViewBean richVideoViewBean = new RichVideoViewBean();
+        richVideoViewBean.edit_imageView = imageView;
+        richVideoViewBean.tv_video_state = tv_video_state;
+        richVideoViewBean.tv_video_progress = tv_video_progress;
+        richVideoViewBean.pb_progress_video = pb_progress_video;
+        richVideoViewBean.ll_video_upload = ll_video_upload;
+        richVideoViewBeans.add(richVideoViewBean);
 
-        EditData.Data imageData = imageView.getImageData();
+        RichEditData.Data imageData = imageView.getImageData();
         //上传视频失败
-        if (imageData.videoProgress == EditData.UPLOAD_VIDEO_FAIL) {
-            videoViewBean.tv_video_state.setText("上传失败!");
-            videoViewBean.tv_video_state.setTextColor(Color.RED);
-            videoViewBean.tv_video_progress.setVisibility(GONE);
-            videoViewBean.pb_progress_video.setProgress(0);
+        if (imageData.videoProgress == RichEditData.UPLOAD_VIDEO_FAIL) {
+            richVideoViewBean.tv_video_state.setText("上传失败!");
+            richVideoViewBean.tv_video_state.setTextColor(Color.RED);
+            richVideoViewBean.tv_video_progress.setVisibility(GONE);
+            richVideoViewBean.pb_progress_video.setProgress(0);
             //上传视频完成
-        } else if (imageData.videoProgress == EditData.UPLOAD_VIDEO_SUCCESS) {
-            videoViewBean.ll_video_upload.setVisibility(GONE);
-            loadVideoPic(imageData, videoViewBean.edit_imageView);
+        } else if (imageData.videoProgress == RichEditData.UPLOAD_VIDEO_SUCCESS) {
+            richVideoViewBean.ll_video_upload.setVisibility(GONE);
+            loadVideoPic(imageData, richVideoViewBean.edit_imageView);
         }
     }
 
     /**
      * 加载视频图片
      */
-    private void loadVideoPic(EditData.Data imageData, DataImageView imageView) {
+    private void loadVideoPic(RichEditData.Data imageData, DataImageView imageView) {
         //视频封面
         String imagePath = imageData.videoPicPath;
         //本地视频地址
@@ -641,7 +650,7 @@ public class RichTextEditor extends ScrollView {
     /**
      * 在特定位置添加ImageView
      */
-    private void addImageViewAtIndex(final int index, final EditData.Data imageData) {
+    private void addImageViewAtIndex(final int index, final RichEditData.Data imageData) {
         try {
             final RelativeLayout imageLayout = createImageOrVideoLayout(imageData);
             DataImageView imageView = imageLayout.findViewById(R.id.edit_imageView);
@@ -692,19 +701,19 @@ public class RichTextEditor extends ScrollView {
     /**
      * 对外提供的接口, 生成编辑数据上传
      */
-    public List<EditData.Data> getEditData() {
-        List<EditData.Data> dataList = new ArrayList<EditData.Data>();
+    public List<RichEditData.Data> getEditData() {
+        List<RichEditData.Data> dataList = new ArrayList<RichEditData.Data>();
         try {
             int num = allLayout.getChildCount();
             for (int index = 0; index < num; index++) {
                 View itemView = allLayout.getChildAt(index);
-                EditData.Data itemData = null;
+                RichEditData.Data itemData = null;
                 if (itemView instanceof EditText) {
                     EditText item = (EditText) itemView;
                     String inputStr = item.getText().toString();
                     if (!TextUtils.isEmpty(inputStr)) {
-                        itemData = new EditData.Data();
-                        itemData.type = EditData.TEXT;
+                        itemData = new RichEditData.Data();
+                        itemData.type = RichEditData.TEXT;
                         itemData.inputStr = inputStr;
                     }
                 } else if (itemView instanceof RelativeLayout) {
@@ -725,15 +734,15 @@ public class RichTextEditor extends ScrollView {
     /**
      * 将数据展示
      */
-    public void setEditData(List<EditData.Data> editData) {
+    public void setEditData(List<RichEditData.Data> editData) {
         try {
             for (int i = 0; i < editData.size(); i++) {
-                EditData.Data data = editData.get(i);
+                RichEditData.Data data = editData.get(i);
                 //图片
-                if (data.type == EditData.IMAGE || data.type == EditData.VIDEO) {
+                if (data.type == RichEditData.IMAGE || data.type == RichEditData.VIDEO) {
                     insertImageOrVideo(data);
                     //文字
-                } else if (data.type == EditData.TEXT) {
+                } else if (data.type == RichEditData.TEXT) {
                     //最后一个为EditText且内容为空, 则直接设置内容
                     View childAt = allLayout.getChildAt(allLayout.getChildCount() - 1);
                     if (childAt instanceof EditText) {
@@ -801,7 +810,7 @@ public class RichTextEditor extends ScrollView {
          *
          * @param imageData
          */
-        void onRtImageDelete(EditData.Data imageData);
+        void onRtImageDelete(RichEditData.Data imageData);
     }
 
     public void setOnRtImageDeleteListener(OnRtImageDeleteListener onRtImageDeleteListener) {
@@ -816,7 +825,7 @@ public class RichTextEditor extends ScrollView {
          * @param imageData
          * @param imagePath
          */
-        void onRtImageClick(View view, EditData.Data imageData, String imagePath);
+        void onRtImageClick(View view, RichEditData.Data imageData, String imagePath);
 
         /**
          * 视频播放点击
@@ -825,7 +834,7 @@ public class RichTextEditor extends ScrollView {
          * @param imageData
          * @param imagePath
          */
-        void onRtVideoPlayClick(View view, EditData.Data imageData, String imagePath);
+        void onRtVideoPlayClick(View view, RichEditData.Data imageData, String imagePath);
     }
 
     public void setOnRtImageClickListener(OnRtImageClickListener onRtImageClickListener) {
