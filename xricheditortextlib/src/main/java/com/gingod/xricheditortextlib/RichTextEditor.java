@@ -39,7 +39,6 @@ import java.util.regex.Pattern;
  *
  * @author
  */
-@SuppressLint({"NewApi", "InflateParams"})
 public class RichTextEditor extends ScrollView {
     /**
      * 视频控件信息
@@ -71,7 +70,7 @@ public class RichTextEditor extends ScrollView {
      */
     private EditText lastFocusEdit;
     /**
-     * 只在图片View添加或remove时，触发transition动画
+     * 图片视频View添加或remove时，触发transition动画
      */
     private LayoutTransition mTransitioner;
     /**
@@ -102,7 +101,7 @@ public class RichTextEditor extends ScrollView {
     private int rtTextColor = Color.parseColor("#212121");
     private int rtTextLineSpace = 16;
     /**
-     * 图片点击监听器
+     * 图片点击监听器(包含图片和删除)
      */
     private OnClickListener btnListener;
     /**
@@ -138,7 +137,7 @@ public class RichTextEditor extends ScrollView {
             rtTextColor = ta.getColor(R.styleable.RichTextEditor_rt_editor_text_color, Color.parseColor("#212121"));
             rtTextInitHint = ta.getString(R.styleable.RichTextEditor_rt_editor_text_init_hint);
             ta.recycle();
-
+            //默认输入提示文字
             if (TextUtils.isEmpty(rtTextInitHint)) {
                 rtTextInitHint = "输入文字";
             }
@@ -320,7 +319,7 @@ public class RichTextEditor extends ScrollView {
                 mergeEditText();
                 //关闭视频时清空记录的信息
                 for (int i = 0; i < richVideoViewBeans.size(); i++) {
-                    RichVideoViewBean richVideoViewBean =  richVideoViewBeans.get(i);
+                    RichVideoViewBean richVideoViewBean = richVideoViewBeans.get(i);
                     RichEditData.Data imageData1 = richVideoViewBean.edit_imageView.getImageData();
                     //视频控件已经存在, 更新信息
                     if (editData.localVideoPath.equals(imageData1.localVideoPath)) {
@@ -412,43 +411,52 @@ public class RichTextEditor extends ScrollView {
      * 插入一张图片或者视频
      */
     public void insertImageOrVideo(RichEditData.Data imageData) {
-        //信息不存在
-        if (imageData == null) {
-            return;
-        }
-        if (imageData.type == RichEditData.IMAGE && TextUtils.isEmpty(imageData.imagePath) && TextUtils.isEmpty(imageData.localImagePath)) {
-            return;
-        }
-        if (imageData.type == RichEditData.VIDEO && TextUtils.isEmpty(imageData.localVideoPath) && TextUtils.isEmpty(imageData.videoPath)) {
-            return;
-        }
-        //查看是否为视频上传更新
-        if (imageData.type == RichEditData.VIDEO) {
-            for (int i = 0; i < richVideoViewBeans.size(); i++) {
-                RichVideoViewBean richVideoViewBean = richVideoViewBeans.get(i);
-                RichEditData.Data imageData1 = richVideoViewBean.edit_imageView.getImageData();
-                //视频控件已经存在, 更新信息
-                if (imageData.localVideoPath.equals(imageData1.localVideoPath)) {
-                    //上传视频失败
-                    if (imageData.videoProgress == RichEditData.UPLOAD_VIDEO_FAIL) {
-                        richVideoViewBean.tv_video_state.setText("上传失败!");
-                        richVideoViewBean.tv_video_state.setTextColor(Color.RED);
-                        richVideoViewBean.tv_video_progress.setVisibility(GONE);
-                        richVideoViewBean.pb_progress_video.setProgress(0);
-                        //上传视频完成
-                    } else if (imageData.videoProgress == RichEditData.UPLOAD_VIDEO_SUCCESS) {
-                        richVideoViewBean.ll_video_upload.setVisibility(GONE);
-                        loadVideoPic(imageData, richVideoViewBean.edit_imageView);
-                        //正在上传视频
-                    } else {
-                        richVideoViewBean.pb_progress_video.setProgress(imageData.videoProgress);
-                        richVideoViewBean.tv_video_progress.setText(imageData.videoProgressStr);
+        try {
+            //信息不存在
+            if (imageData == null) {
+                return;
+            }
+            if (imageData.type == RichEditData.IMAGE && TextUtils.isEmpty(imageData.imagePath) && TextUtils.isEmpty(imageData.localImagePath)) {
+                return;
+            }
+            if (imageData.type == RichEditData.VIDEO && TextUtils.isEmpty(imageData.localVideoPath) && TextUtils.isEmpty(imageData.videoPath)) {
+                return;
+            }
+            //查看是否为视频上传更新
+            if (imageData.type == RichEditData.VIDEO) {
+                for (int i = 0; i < richVideoViewBeans.size(); i++) {
+                    RichVideoViewBean richVideoViewBean = richVideoViewBeans.get(i);
+                    RichEditData.Data imageData1 = richVideoViewBean.edit_imageView.getImageData();
+                    //视频控件已经存在, 更新信息
+                    if (imageData.localVideoPath.equals(imageData1.localVideoPath)) {
+                        //上传视频失败
+                        if (imageData.videoProgress == RichEditData.UPLOAD_VIDEO_FAIL) {
+                            richVideoViewBean.ll_video_upload.setVisibility(VISIBLE);
+                            richVideoViewBean.tv_video_state.setText("上传失败!");
+                            richVideoViewBean.tv_video_state.setTextColor(Color.RED);
+                            richVideoViewBean.tv_video_progress.setText("");
+                            richVideoViewBean.pb_progress_video.setProgress(0);
+                            //上传视频完成
+                        } else if (imageData.videoProgress == RichEditData.UPLOAD_VIDEO_SUCCESS) {
+                            richVideoViewBean.ll_video_upload.setVisibility(GONE);
+                            loadVideoPic(imageData, richVideoViewBean.edit_imageView);
+                            //正在上传视频
+                        } else {
+                            richVideoViewBean.ll_video_upload.setVisibility(VISIBLE);
+                            richVideoViewBean.tv_video_state.setText("上传中... ");
+                            richVideoViewBean.tv_video_state.setTextColor(Color.WHITE);
+                            richVideoViewBean.tv_video_progress.setText(imageData.videoProgressStr);
+                            richVideoViewBean.pb_progress_video.setProgress(imageData.videoProgress);
+                        }
+                        richVideoViewBean.edit_imageView.setImageData(imageData);
+                        return;
                     }
-                    return;
                 }
             }
+            insertView(imageData);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        insertView(imageData);
     }
 
     /**
@@ -563,10 +571,14 @@ public class RichTextEditor extends ScrollView {
      * 在特定位置添加View
      */
     private void addViewAtIndex(final int index, final RichEditData.Data editData) {
-        if (RichEditData.IMAGE == editData.type) {
-            addImageViewAtIndex(index, editData);
-        } else if (RichEditData.VIDEO == editData.type) {
-            addVideoViewAtIndex(index, editData);
+        try {
+            if (RichEditData.IMAGE == editData.type) {
+                addImageViewAtIndex(index, editData);
+            } else if (RichEditData.VIDEO == editData.type) {
+                addVideoViewAtIndex(index, editData);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -603,29 +615,34 @@ public class RichTextEditor extends ScrollView {
      * 记录视频控件信息
      */
     private void storeVideoView(RelativeLayout imageLayout, DataImageView imageView) {
-        TextView tv_video_state = imageLayout.findViewById(R.id.tv_video_state);
-        TextView tv_video_progress = imageLayout.findViewById(R.id.tv_video_progress);
-        ProgressBar pb_progress_video = imageLayout.findViewById(R.id.pb_progress_video);
-        View ll_video_upload = imageLayout.findViewById(R.id.ll_video_upload);
-        RichVideoViewBean richVideoViewBean = new RichVideoViewBean();
-        richVideoViewBean.edit_imageView = imageView;
-        richVideoViewBean.tv_video_state = tv_video_state;
-        richVideoViewBean.tv_video_progress = tv_video_progress;
-        richVideoViewBean.pb_progress_video = pb_progress_video;
-        richVideoViewBean.ll_video_upload = ll_video_upload;
-        richVideoViewBeans.add(richVideoViewBean);
+        try {
+            TextView tv_video_state = imageLayout.findViewById(R.id.tv_video_state);
+            TextView tv_video_progress = imageLayout.findViewById(R.id.tv_video_progress);
+            ProgressBar pb_progress_video = imageLayout.findViewById(R.id.pb_progress_video);
+            View ll_video_upload = imageLayout.findViewById(R.id.ll_video_upload);
+            RichVideoViewBean richVideoViewBean = new RichVideoViewBean();
+            richVideoViewBean.edit_imageView = imageView;
+            richVideoViewBean.tv_video_state = tv_video_state;
+            richVideoViewBean.tv_video_progress = tv_video_progress;
+            richVideoViewBean.pb_progress_video = pb_progress_video;
+            richVideoViewBean.ll_video_upload = ll_video_upload;
+            richVideoViewBeans.add(richVideoViewBean);
 
-        RichEditData.Data imageData = imageView.getImageData();
-        //上传视频失败
-        if (imageData.videoProgress == RichEditData.UPLOAD_VIDEO_FAIL) {
-            richVideoViewBean.tv_video_state.setText("上传失败!");
-            richVideoViewBean.tv_video_state.setTextColor(Color.RED);
-            richVideoViewBean.tv_video_progress.setVisibility(GONE);
-            richVideoViewBean.pb_progress_video.setProgress(0);
-            //上传视频完成
-        } else if (imageData.videoProgress == RichEditData.UPLOAD_VIDEO_SUCCESS) {
-            richVideoViewBean.ll_video_upload.setVisibility(GONE);
-            loadVideoPic(imageData, richVideoViewBean.edit_imageView);
+            RichEditData.Data imageData = imageView.getImageData();
+            //上传视频失败
+            if (imageData.videoProgress == RichEditData.UPLOAD_VIDEO_FAIL) {
+                richVideoViewBean.ll_video_upload.setVisibility(VISIBLE);
+                richVideoViewBean.tv_video_state.setText("上传失败!");
+                richVideoViewBean.tv_video_state.setTextColor(Color.RED);
+                richVideoViewBean.tv_video_progress.setText("");
+                richVideoViewBean.pb_progress_video.setProgress(0);
+                //上传视频完成
+            } else if (imageData.videoProgress == RichEditData.UPLOAD_VIDEO_SUCCESS) {
+                richVideoViewBean.ll_video_upload.setVisibility(GONE);
+                loadVideoPic(imageData, richVideoViewBean.edit_imageView);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -633,18 +650,22 @@ public class RichTextEditor extends ScrollView {
      * 加载视频图片
      */
     private void loadVideoPic(RichEditData.Data imageData, DataImageView imageView) {
-        //视频封面
-        String imagePath = imageData.videoPicPath;
-        //本地视频地址
-        if (TextUtils.isEmpty(imagePath)) {
-            imagePath = imageData.localVideoPath;
+        try {
+            //视频封面
+            String imagePath = imageData.videoPicPath;
+            //本地视频地址
+            if (TextUtils.isEmpty(imagePath)) {
+                imagePath = imageData.localVideoPath;
+            }
+            //网络视频地址
+            if (TextUtils.isEmpty(imagePath)) {
+                imagePath = imageData.videoPath;
+            }
+            imageView.setAbsolutePath(imagePath);
+            RichTextUtils.getInstance().loadImage(imageData, imagePath, imageView, rtImageHeight);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        //网络视频地址
-        if (TextUtils.isEmpty(imagePath)) {
-            imagePath = imageData.videoPath;
-        }
-        imageView.setAbsolutePath(imagePath);
-        RichTextUtils.getInstance().loadImage(imageData, imagePath, imageView, rtImageHeight);
     }
 
     /**
@@ -756,6 +777,7 @@ public class RichTextEditor extends ScrollView {
                             continue;
                         }
                     }
+                    //新插入一个TextView
                     addEditTextAtIndex(getLastIndex(), data.inputStr);
                 }
             }
@@ -792,8 +814,12 @@ public class RichTextEditor extends ScrollView {
      * 清空所有布局
      */
     public void clearAllLayout() {
-        allLayout.removeAllViews();
-        addFirstEditText();
+        try {
+            allLayout.removeAllViews();
+            addFirstEditText();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -804,6 +830,9 @@ public class RichTextEditor extends ScrollView {
         return childCount;
     }
 
+    /**
+     * 图片删除监听
+     */
     public interface OnRtImageDeleteListener {
         /**
          * 图片删除
@@ -813,10 +842,16 @@ public class RichTextEditor extends ScrollView {
         void onRtImageDelete(RichEditData.Data imageData);
     }
 
+    /**
+     * 设置图片删除监听
+     */
     public void setOnRtImageDeleteListener(OnRtImageDeleteListener onRtImageDeleteListener) {
         this.onRtImageDeleteListener = onRtImageDeleteListener;
     }
 
+    /**
+     * 图片点击监听
+     */
     public interface OnRtImageClickListener {
         /**
          * 图片点击查看
@@ -837,6 +872,9 @@ public class RichTextEditor extends ScrollView {
         void onRtVideoPlayClick(View view, RichEditData.Data imageData, String imagePath);
     }
 
+    /**
+     * 设置图片点击监听
+     */
     public void setOnRtImageClickListener(OnRtImageClickListener onRtImageClickListener) {
         this.onRtImageClickListener = onRtImageClickListener;
     }

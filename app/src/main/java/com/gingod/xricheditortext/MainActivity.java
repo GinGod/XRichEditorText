@@ -22,6 +22,7 @@ public class MainActivity extends BaseSimpleActivity {
     RichTextEditor rte_main;
 
     private String imagePath = "http://img.hb.aicdn.com/a1f189d4a420ef1927317ebfacc2ae055ff9f212148fb-iEyFWS_fw658";
+    private String VideoPicPath = "http://img.hb.aicdn.com/e22ee5730f152c236c69e2242b9d9114852be2bd8629-EKEnFD_fw658";
     private int num = 0;
 
     @Override
@@ -93,12 +94,13 @@ public class MainActivity extends BaseSimpleActivity {
                 imageData.videoProgressStr = imageData.videoProgress + "%";
                 if (imageData.videoProgress == 100) {
                     imageData.videoProgress = RichEditData.UPLOAD_VIDEO_SUCCESS;
+                    imageData.videoPicPath = VideoPicPath;
                 } else {
                     success(imageData);
                 }
                 rte_main.insertImageOrVideo(imageData);
             }
-        }, 252);
+        }, 52);
     }
 
     private void fail(RichEditData.Data imageData) {
